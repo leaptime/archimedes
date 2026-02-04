@@ -2,10 +2,10 @@
 
 namespace Modules\Invoicing\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Modules\Core\Models\ExtendableModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Tax extends Model
+class Tax extends ExtendableModel
 {
     protected $fillable = [
         'name',

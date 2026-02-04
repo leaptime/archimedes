@@ -1,63 +1,96 @@
 {
-    "name": "Banking",
-    "version": "1.0.0",
-    "description": "Bank account management, transaction import, and reconciliation",
-    "author": "Archimedes",
-    "category": "Accounting",
-    "depends": ["core", "contacts"],
-    "autoload": {
-        "psr-4": {
-            "Modules\\Banking\\": "src/"
+  "name": "banking",
+  "displayName": "Banking",
+  "version": "1.0.0",
+  "description": "Bank account management, transaction import, and reconciliation",
+  "author": "Archimedes",
+  "license": "MIT",
+  "category": "Accounting",
+  "depends": ["core", "contacts"],
+  
+  "autoload": {
+    "psr-4": {
+      "Modules\\Banking\\": "src/"
+    }
+  },
+  
+  "providers": [
+    "Modules\\Banking\\BankingServiceProvider"
+  ],
+  
+  "migrations": "database/migrations",
+  
+  "routes": {
+    "api": "src/routes.php"
+  },
+  
+  "models": {
+    "BankAccount": {
+      "class": "Modules\\Banking\\Models\\BankAccount",
+      "table": "bank_accounts",
+      "extends": "ExtendableModel"
+    },
+    "BankStatement": {
+      "class": "Modules\\Banking\\Models\\BankStatement",
+      "table": "bank_statements",
+      "extends": "ExtendableModel"
+    },
+    "BankStatementLine": {
+      "class": "Modules\\Banking\\Models\\BankStatementLine",
+      "table": "bank_statement_lines",
+      "extends": "ExtendableModel"
+    },
+    "BankConnection": {
+      "class": "Modules\\Banking\\Models\\BankConnection",
+      "table": "bank_connections",
+      "extends": "ExtendableModel"
+    }
+  },
+  
+  "frontend": {
+    "pages": {
+      "/banking": "pages/banking.tsx"
+    },
+    "extensionPoints": {
+      "banking.list.filters": { "type": "filters" },
+      "banking.list.columns": { "type": "columns" },
+      "banking.form.sidebar": { "type": "sidebar" },
+      "banking.detail.header": { "type": "header" },
+      "banking.detail.tabs": { "type": "tabs" },
+      "banking.reconciliation.actions": { "type": "actions" }
+    },
+    "navigation": {
+      "main": [
+        {
+          "label": "Banking",
+          "icon": "Landmark",
+          "path": "/banking",
+          "permission": "banking.view"
         }
-    },
-    "providers": [
-        "Modules\\Banking\\BankingServiceProvider"
-    ],
-    "migrations": "database/migrations",
-    "routes": "src/routes.php",
-    "frontend": {
-        "components": "frontend/components",
-        "pages": [
-            {
-                "name": "Banking Dashboard",
-                "path": "/banking",
-                "component": "banking-dashboard"
-            },
-            {
-                "name": "Bank Accounts",
-                "path": "/banking/accounts",
-                "component": "bank-accounts"
-            },
-            {
-                "name": "Transactions",
-                "path": "/banking/transactions",
-                "component": "transactions"
-            },
-            {
-                "name": "Statements",
-                "path": "/banking/statements",
-                "component": "statements"
-            },
-            {
-                "name": "Import",
-                "path": "/banking/import",
-                "component": "import"
-            },
-            {
-                "name": "Reconciliation",
-                "path": "/banking/reconciliation",
-                "component": "reconciliation"
-            }
-        ]
-    },
-    "permissions": [
-        "banking.view",
-        "banking.create",
-        "banking.edit",
-        "banking.delete",
-        "banking.import",
-        "banking.reconcile"
-    ],
-    "icon": "landmark",
-    "color": "#10B981"
+      ]
+    }
+  },
+  
+  "permissions": {
+    "groups": [
+      {
+        "id": "banking.group_readonly",
+        "name": "Banking Readonly",
+        "description": "Can view bank accounts and statements"
+      },
+      {
+        "id": "banking.group_user",
+        "name": "Banking User",
+        "description": "Can manage statements and reconcile"
+      },
+      {
+        "id": "banking.group_manager",
+        "name": "Banking Manager",
+        "description": "Full banking access including connections"
+      }
+    ]
+  },
+  
+  "icon": "landmark",
+  "color": "#10B981"
 }

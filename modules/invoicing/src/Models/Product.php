@@ -2,11 +2,11 @@
 
 namespace Modules\Invoicing\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Modules\Core\Models\ExtendableModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Product extends Model
+class Product extends ExtendableModel
 {
     use SoftDeletes;
 

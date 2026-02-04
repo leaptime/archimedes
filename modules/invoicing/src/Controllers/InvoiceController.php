@@ -10,6 +10,8 @@ use Modules\Invoicing\Models\InvoiceLine;
 use Modules\Invoicing\Models\PaymentTerm;
 use Modules\Invoicing\Models\Tax;
 use Modules\Invoicing\Models\Currency;
+use Modules\Invoicing\Services\InvoicePdfService;
+use Modules\Invoicing\Services\InvoiceEmailService;
 
 class InvoiceController extends Controller
 {
@@ -503,5 +505,110 @@ class InvoiceController extends Controller
 
         $taxes = $query->orderBy('sequence')->get();
         return response()->json(['data' => $taxes]);
+    }
+
+    /**
+     * Download invoice as PDF
+     */
+    public function downloadPdf(Invoice $invoice, InvoicePdfService $pdfService)
+    {
+        return $pdfService->download($invoice);
+    }
+
+    /**
+     * Stream invoice PDF (view in browser)
+     */
+    public function viewPdf(Invoice $invoice, InvoicePdfService $pdfService)
+    {
+        return $pdfService->stream($invoice);
+    }
+
+    /**
+     * Get PDF as base64 for preview
+     */
+    public function previewPdf(Invoice $invoice, InvoicePdfService $pdfService): JsonResponse
+    {
+        $pdfContent = $pdfService->generate($invoice);
+        
+        return response()->json([
+            'data' => base64_encode($pdfContent),
+            'filename' => ($invoice->number ?: "DRAFT-{$invoice->id}") . '.pdf',
+            'mime_type' => 'application/pdf',
+        ]);
+    }
+
+    /**
+     * Send invoice via email
+     */
+    public function sendEmail(Request $request, Invoice $invoice, InvoiceEmailService $emailService): JsonResponse
+    {
+        $validated = $request->validate([
+            'recipient_email' => 'nullable|email',
+            'recipient_name' => 'nullable|string|max:255',
+            'message' => 'nullable|string|max:2000',
+            'attach_pdf' => 'boolean',
+            'cc' => 'nullable|array',
+            'cc.*' => 'email',
+            'bcc' => 'nullable|array',
+            'bcc.*' => 'email',
+        ]);
+
+        try {
+            $emailService->send(
+                invoice: $invoice,
+                recipientEmail: $validated['recipient_email'] ?? null,
+                recipientName: $validated['recipient_name'] ?? null,
+                customMessage: $validated['message'] ?? '',
+                attachPdf: $validated['attach_pdf'] ?? true,
+                cc: $validated['cc'] ?? [],
+                bcc: $validated['bcc'] ?? [],
+            );
+
+            return response()->json([
+                'message' => 'Invoice sent successfully',
+                'sent_to' => $validated['recipient_email'] ?? $invoice->contact?->email,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to send invoice',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Get email preview data
+     */
+    public function emailPreview(Invoice $invoice, InvoiceEmailService $emailService): JsonResponse
+    {
+        return response()->json([
+            'data' => $emailService->preview($invoice),
+        ]);
+    }
+
+    /**
+     * Send payment reminder
+     */
+    public function sendReminder(Request $request, Invoice $invoice, InvoiceEmailService $emailService): JsonResponse
+    {
+        $validated = $request->validate([
+            'message' => 'nullable|string|max:2000',
+        ]);
+
+        try {
+            $emailService->sendReminder(
+                invoice: $invoice,
+                customMessage: $validated['message'] ?? '',
+            );
+
+            return response()->json([
+                'message' => 'Reminder sent successfully',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to send reminder',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
     }
 }

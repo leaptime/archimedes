@@ -44,19 +44,21 @@ export default defineConfig({
             },
             dependencies: ['setup'],
         },
-        {
-            name: 'firefox',
-            use: { 
-                ...devices['Desktop Firefox'],
-                storageState: 'playwright/.auth/user.json',
-            },
-            dependencies: ['setup'],
-        },
+        // Firefox disabled - run `npx playwright install firefox` to enable
+        // {
+        //     name: 'firefox',
+        //     use: { 
+        //         ...devices['Desktop Firefox'],
+        //         storageState: 'playwright/.auth/user.json',
+        //     },
+        //     dependencies: ['setup'],
+        // },
     ],
 
     // Run local dev server before tests
+    // NOTE: Run `npm run build` before running tests to ensure production assets exist
     webServer: {
-        command: 'php artisan serve',
+        command: 'php artisan serve --env=testing',
         url: 'http://127.0.0.1:8000',
         reuseExistingServer: !process.env.CI,
         timeout: 30000,

@@ -212,6 +212,21 @@ class Invoice extends ExtendableModel
         return $this->hasMany(Payment::class);
     }
 
+    public function cashBookAllocations(): HasMany
+    {
+        return $this->hasMany(\Modules\CashBook\Models\CashBookAllocation::class);
+    }
+
+    public function cashBookEntries(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(
+            \Modules\CashBook\Models\CashBookEntry::class,
+            'cashbook_allocations',
+            'invoice_id',
+            'cashbook_entry_id'
+        )->withPivot('amount_applied', 'notes')->withTimestamps();
+    }
+
     // -------------------------------------------------------------------------
     // Scopes
     // -------------------------------------------------------------------------
@@ -480,7 +495,14 @@ class Invoice extends ExtendableModel
 
     public function updatePaymentState(): void
     {
-        $totalPaid = $this->payments()->sum('amount');
+        // Sum from legacy payments table
+        $paymentsTotal = $this->payments()->sum('amount');
+        
+        // Sum from Cash Book allocations
+        $cashBookTotal = $this->cashBookAllocations()->sum('amount_applied');
+        
+        $totalPaid = $paymentsTotal + $cashBookTotal;
+        
         $this->amount_paid = $totalPaid;
         $this->amount_residual = max(0, $this->amount_total - $totalPaid);
         $this->amount_due = $this->amount_residual;

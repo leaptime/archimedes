@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import AppLayout from '@/layouts/app-layout';
+import { DashboardLayout, DashboardHeader } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +32,14 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
     ArrowLeft,
     Send,
@@ -51,7 +59,10 @@ import {
     Phone,
     MapPin,
     Loader2,
+    MoreHorizontal,
+    Eye,
 } from 'lucide-react';
+import { ExtensionPoint, DetailExtensionSlot } from '@/components/modules';
 
 interface InvoiceLine {
     id: number;
@@ -170,6 +181,13 @@ export default function InvoiceDetailPage() {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+    const [showEmailDialog, setShowEmailDialog] = useState(false);
+    const [emailForm, setEmailForm] = useState({
+        recipient_email: '',
+        message: '',
+        attach_pdf: true,
+    });
+    const [emailSending, setEmailSending] = useState(false);
     const [paymentForm, setPaymentForm] = useState({
         amount: '',
         payment_method: 'bank_transfer',
@@ -254,6 +272,68 @@ export default function InvoiceDetailPage() {
         }
     };
 
+    const handleDownloadPdf = async () => {
+        try {
+            const response = await fetch(`/api/invoices/${id}/pdf`);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${invoice?.number || 'invoice'}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        } catch (error) {
+            console.error('Failed to download PDF:', error);
+        }
+    };
+
+    const handleViewPdf = () => {
+        window.open(`/api/invoices/${id}/pdf/view`, '_blank');
+    };
+
+    const handlePrint = () => {
+        window.open(`/api/invoices/${id}/pdf/view`, '_blank');
+    };
+
+    const handleSendEmail = async () => {
+        setEmailSending(true);
+        try {
+            const response = await fetch(`/api/invoices/${id}/email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    recipient_email: emailForm.recipient_email || undefined,
+                    message: emailForm.message || undefined,
+                    attach_pdf: emailForm.attach_pdf,
+                }),
+            });
+
+            if (response.ok) {
+                setShowEmailDialog(false);
+                setEmailForm({ recipient_email: '', message: '', attach_pdf: true });
+                loadInvoice();
+            } else {
+                const data = await response.json();
+                alert(data.message || 'Failed to send email');
+            }
+        } catch (error) {
+            console.error('Failed to send email:', error);
+        } finally {
+            setEmailSending(false);
+        }
+    };
+
+    const openEmailDialog = () => {
+        setEmailForm({
+            recipient_email: invoice?.contact?.email || '',
+            message: '',
+            attach_pdf: true,
+        });
+        setShowEmailDialog(true);
+    };
+
     const formatCurrency = (amount: number) => {
         const symbol = invoice?.currency?.symbol || '$';
         return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -261,24 +341,24 @@ export default function InvoiceDetailPage() {
 
     if (loading) {
         return (
-            <AppLayout>
+            <DashboardLayout>
                 <div className="flex h-96 items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-            </AppLayout>
+            </DashboardLayout>
         );
     }
 
     if (!invoice) {
         return (
-            <AppLayout>
+            <DashboardLayout>
                 <div className="flex h-96 flex-col items-center justify-center">
                     <p className="text-muted-foreground">Invoice not found</p>
                     <Button variant="link" onClick={() => navigate('/invoices')}>
                         Back to Invoices
                     </Button>
                 </div>
-            </AppLayout>
+            </DashboardLayout>
         );
     }
 
@@ -287,39 +367,32 @@ export default function InvoiceDetailPage() {
         new Date(invoice.invoice_date_due) < new Date();
 
     return (
-        <AppLayout>
+        <DashboardLayout>
+            <DashboardHeader
+                title={invoice.number || `Draft ${MOVE_TYPE_LABELS[invoice.move_type]}`}
+                subtitle={MOVE_TYPE_LABELS[invoice.move_type]}
+                backLink="/invoices"
+            >
+                <div className="flex items-center gap-2">
+                    <Badge variant={STATE_CONFIG[invoice.state]?.variant}>
+                        {STATE_CONFIG[invoice.state]?.label}
+                    </Badge>
+                    {invoice.state === 'posted' && (
+                        <Badge className={PAYMENT_STATE_CONFIG[invoice.payment_state]?.className}>
+                            {PAYMENT_STATE_CONFIG[invoice.payment_state]?.label}
+                        </Badge>
+                    )}
+                    {isOverdue && (
+                        <Badge variant="destructive">Overdue</Badge>
+                    )}
+                </div>
+            </DashboardHeader>
             <div className="space-y-6 p-6">
-                {/* Header */}
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => navigate('/invoices')}>
-                            <ArrowLeft className="h-5 w-5" />
-                        </Button>
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-2xl font-bold">
-                                    {invoice.number || `Draft ${MOVE_TYPE_LABELS[invoice.move_type]}`}
-                                </h1>
-                                <Badge variant={STATE_CONFIG[invoice.state]?.variant}>
-                                    {STATE_CONFIG[invoice.state]?.label}
-                                </Badge>
-                                {invoice.state === 'posted' && (
-                                    <Badge className={PAYMENT_STATE_CONFIG[invoice.payment_state]?.className}>
-                                        {PAYMENT_STATE_CONFIG[invoice.payment_state]?.label}
-                                    </Badge>
-                                )}
-                                {isOverdue && (
-                                    <Badge variant="destructive">Overdue</Badge>
-                                )}
-                            </div>
-                            <p className="text-muted-foreground">
-                                {MOVE_TYPE_LABELS[invoice.move_type]}
-                                {invoice.ref && ` • Ref: ${invoice.ref}`}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Actions */}
+                {/* Actions Bar */}
+                <div className="flex items-center justify-between">
+                    <p className="text-muted-foreground">
+                        {invoice.ref && `Ref: ${invoice.ref}`}
+                    </p>
                     <div className="flex gap-2">
                         {invoice.state === 'draft' && (
                             <>
@@ -339,13 +412,9 @@ export default function InvoiceDetailPage() {
                         )}
                         {invoice.state === 'posted' && (
                             <>
-                                <Button variant="outline" onClick={() => handleAction('send')} disabled={actionLoading === 'send'}>
-                                    {actionLoading === 'send' ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Send className="mr-2 h-4 w-4" />
-                                    )}
-                                    Send
+                                <Button variant="outline" onClick={openEmailDialog}>
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    Send Email
                                 </Button>
                                 {invoice.payment_state !== 'paid' && (
                                     <Button onClick={() => setShowPaymentDialog(true)}>
@@ -367,14 +436,34 @@ export default function InvoiceDetailPage() {
                                 Reset to Draft
                             </Button>
                         )}
-                        <Button variant="outline" onClick={() => handleAction('duplicate')}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Duplicate
-                        </Button>
-                        <Button variant="outline">
-                            <Printer className="mr-2 h-4 w-4" />
-                            Print
-                        </Button>
+                        
+                        {/* PDF & More Actions */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handleViewPdf}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    Preview PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleDownloadPdf}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handlePrint}>
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    Print
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleAction('duplicate')}>
+                                    <Copy className="mr-2 h-4 w-4" />
+                                    Duplicate
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 
@@ -673,8 +762,23 @@ export default function InvoiceDetailPage() {
                                 </div>
                             </CardContent>
                         </Card>
+
+                        {/* Extension point for additional sidebar content (e.g., Italian EDI panel) */}
+                        <DetailExtensionSlot
+                            name="invoices.detail.sidebar"
+                            entity={invoice}
+                            onRefresh={loadInvoice}
+                        />
                     </div>
                 </div>
+
+                {/* Extension point for full-width content below main grid */}
+                <DetailExtensionSlot
+                    name="invoices.detail.below"
+                    entity={invoice}
+                    onRefresh={loadInvoice}
+                    className="mt-6"
+                />
             </div>
 
             {/* Payment Dialog */}
@@ -745,6 +849,65 @@ export default function InvoiceDetailPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </AppLayout>
+
+            {/* Email Dialog */}
+            <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Send Invoice by Email</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="recipient_email">Recipient Email</Label>
+                            <Input
+                                id="recipient_email"
+                                type="email"
+                                value={emailForm.recipient_email}
+                                onChange={(e) => setEmailForm({ ...emailForm, recipient_email: e.target.value })}
+                                placeholder="customer@example.com"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Leave blank to use the contact's email address
+                            </p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="message">Custom Message (optional)</Label>
+                            <Textarea
+                                id="message"
+                                value={emailForm.message}
+                                onChange={(e) => setEmailForm({ ...emailForm, message: e.target.value })}
+                                placeholder="Add a personal message to the email..."
+                                rows={3}
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="attach_pdf"
+                                checked={emailForm.attach_pdf}
+                                onChange={(e) => setEmailForm({ ...emailForm, attach_pdf: e.target.checked })}
+                                className="rounded border-gray-300"
+                            />
+                            <Label htmlFor="attach_pdf" className="text-sm font-normal">
+                                Attach PDF invoice
+                            </Label>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowEmailDialog(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSendEmail} disabled={emailSending}>
+                            {emailSending ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Send className="mr-2 h-4 w-4" />
+                            )}
+                            Send Email
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </DashboardLayout>
     );
 }

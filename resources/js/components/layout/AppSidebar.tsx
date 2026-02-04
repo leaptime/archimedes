@@ -9,8 +9,13 @@ import {
     Boxes,
     Wand2,
     ArrowUpCircle,
-    ChevronDown,
     Layers,
+    Users,
+    FileText,
+    Landmark,
+    BookOpen,
+    Target,
+    type LucideIcon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
@@ -21,25 +26,44 @@ interface AppSidebarProps {
     onToggle: () => void;
 }
 
-const mainNavItems = [
-    {
-        title: 'Dashboard',
-        url: '/dashboard',
-        icon: LayoutDashboard,
-        hasSubmenu: true,
-        submenu: [
-            { title: 'Overview', url: '/dashboard' },
-            { title: 'Analytics', url: '/analytics' },
-        ],
-    },
-    { title: 'My Modules', url: '/my-modules', icon: Boxes },
-    { title: 'Marketplace', url: '/marketplace', icon: Store },
-    { title: 'Wizard', url: '/wizard', icon: Wand2 },
-    { title: 'Upgrades', url: '/upgrades', icon: ArrowUpCircle },
-    { title: 'Management', url: '/management', icon: Layers },
+interface NavItem {
+    title: string;
+    url: string;
+    icon: LucideIcon;
+    hasSubmenu?: boolean;
+    submenu?: { title: string; url: string }[];
+}
+
+// Main navigation - Dashboard and Modules
+const mainNavItems: NavItem[] = [
+    { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
 ];
 
-const bottomNavItems = [
+// Module navigation items - active modules with UI
+const moduleNavItems: NavItem[] = [
+    { title: 'Contacts', url: '/contacts', icon: Users },
+    { title: 'CRM', url: '/crm', icon: Target },
+    { title: 'Invoices', url: '/invoices', icon: FileText },
+    { title: 'Cash Book', url: '/cashbook', icon: BookOpen },
+    { title: 'Banking', url: '/banking', icon: Landmark },
+];
+
+// Management section with submenu
+const managementItem: NavItem = {
+    title: 'Management',
+    url: '/management',
+    icon: Layers,
+    hasSubmenu: true,
+    submenu: [
+        { title: 'Overview', url: '/management' },
+        { title: 'My Modules', url: '/my-modules' },
+        { title: 'Marketplace', url: '/marketplace' },
+        { title: 'Wizard', url: '/wizard' },
+        { title: 'Upgrades', url: '/upgrades' },
+    ],
+};
+
+const bottomNavItems: NavItem[] = [
     { title: 'Help', url: '/help', icon: HelpCircle },
 ];
 
@@ -109,91 +133,140 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
             {/* Main Navigation */}
             <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto scrollbar-none">
+                {/* Dashboard */}
                 {mainNavItems.map((item) => (
-                    <div key={item.title}>
-                        {item.hasSubmenu ? (
-                            <>
-                                <button
-                                    onClick={() =>
-                                        setExpandedMenu(expandedMenu === item.title ? null : item.title)
-                                    }
-                                    className={cn(
-                                        'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg',
-                                        'text-foreground bg-accent',
-                                        'transition-colors duration-100',
-                                        collapsed && 'justify-center px-2'
-                                    )}
-                                >
-                                    <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
-                                    {!collapsed && (
-                                        <>
-                                            <span className="text-sm font-medium flex-1 text-left">
-                                                {item.title}
-                                            </span>
-                                            <ChevronRight
-                                                className={cn(
-                                                    'w-4 h-4 text-muted-foreground transition-transform',
-                                                    expandedMenu === item.title && 'rotate-90'
-                                                )}
-                                            />
-                                        </>
-                                    )}
-                                </button>
-                                <AnimatePresence>
-                                    {!collapsed && expandedMenu === item.title && item.submenu && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: 'auto', opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            transition={{ duration: 0.15 }}
-                                            className="overflow-hidden"
-                                        >
-                                            <div className="pl-9 py-1 space-y-0.5">
-                                                {item.submenu.map((subitem) => (
-                                                    <NavLink
-                                                        key={subitem.title}
-                                                        to={subitem.url}
-                                                        className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground rounded-md transition-colors"
-                                                        activeClassName="text-foreground font-medium"
-                                                    >
-                                                        {subitem.title}
-                                                    </NavLink>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </>
-                        ) : (
-                            <NavLink
-                                to={item.url}
-                                className={cn(
-                                    'flex items-center gap-3 px-3 py-2.5 rounded-lg',
-                                    'text-muted-foreground',
-                                    'hover:text-foreground hover:bg-accent',
-                                    'transition-colors duration-100',
-                                    collapsed && 'justify-center px-2'
-                                )}
-                                activeClassName="text-foreground bg-accent"
-                            >
-                                <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
-                                <AnimatePresence mode="wait">
-                                    {!collapsed && (
-                                        <motion.span
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            transition={{ duration: 0.1 }}
-                                            className="text-sm font-medium"
-                                        >
-                                            {item.title}
-                                        </motion.span>
-                                    )}
-                                </AnimatePresence>
-                            </NavLink>
+                    <NavLink
+                        key={item.title}
+                        to={item.url}
+                        className={cn(
+                            'flex items-center gap-3 px-3 py-2.5 rounded-lg',
+                            'text-muted-foreground',
+                            'hover:text-foreground hover:bg-accent',
+                            'transition-colors duration-100',
+                            collapsed && 'justify-center px-2'
                         )}
-                    </div>
+                        activeClassName="text-foreground bg-accent"
+                    >
+                        <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
+                        <AnimatePresence mode="wait">
+                            {!collapsed && (
+                                <motion.span
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.1 }}
+                                    className="text-sm font-medium"
+                                >
+                                    {item.title}
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </NavLink>
                 ))}
+
+                {/* Modules Section */}
+                {!collapsed && (
+                    <div className="px-2 pt-4 pb-2">
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Modules
+                        </span>
+                    </div>
+                )}
+                {collapsed && <div className="h-3" />}
+                
+                {moduleNavItems.map((item) => (
+                    <NavLink
+                        key={item.title}
+                        to={item.url}
+                        className={cn(
+                            'flex items-center gap-3 px-3 py-2.5 rounded-lg',
+                            'text-muted-foreground',
+                            'hover:text-foreground hover:bg-accent',
+                            'transition-colors duration-100',
+                            collapsed && 'justify-center px-2'
+                        )}
+                        activeClassName="text-foreground bg-accent"
+                    >
+                        <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
+                        <AnimatePresence mode="wait">
+                            {!collapsed && (
+                                <motion.span
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.1 }}
+                                    className="text-sm font-medium"
+                                >
+                                    {item.title}
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </NavLink>
+                ))}
+
+                {/* Management Section */}
+                {!collapsed && (
+                    <div className="px-2 pt-4 pb-2">
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Platform
+                        </span>
+                    </div>
+                )}
+                {collapsed && <div className="h-3" />}
+
+                <div>
+                    <button
+                        onClick={() =>
+                            setExpandedMenu(expandedMenu === 'Management' ? null : 'Management')
+                        }
+                        className={cn(
+                            'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg',
+                            'text-muted-foreground',
+                            'hover:text-foreground hover:bg-accent',
+                            'transition-colors duration-100',
+                            collapsed && 'justify-center px-2'
+                        )}
+                    >
+                        <managementItem.icon className="w-[18px] h-[18px] flex-shrink-0" />
+                        {!collapsed && (
+                            <>
+                                <span className="text-sm font-medium flex-1 text-left">
+                                    {managementItem.title}
+                                </span>
+                                <ChevronRight
+                                    className={cn(
+                                        'w-4 h-4 text-muted-foreground transition-transform',
+                                        expandedMenu === 'Management' && 'rotate-90'
+                                    )}
+                                />
+                            </>
+                        )}
+                    </button>
+                    <AnimatePresence>
+                        {!collapsed && expandedMenu === 'Management' && managementItem.submenu && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.15 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="pl-9 py-1 space-y-0.5">
+                                    {managementItem.submenu.map((subitem) => (
+                                        <NavLink
+                                            key={subitem.title}
+                                            to={subitem.url}
+                                            className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground rounded-md transition-colors"
+                                            activeClassName="text-foreground font-medium"
+                                        >
+                                            {subitem.title}
+                                        </NavLink>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </nav>
 
             {/* Bottom Navigation */}

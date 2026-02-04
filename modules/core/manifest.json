@@ -23,7 +23,19 @@
     "api": "src/routes/api.php"
   },
   
+  "models": {},
+  
   "frontend": {
-    "entry": "frontend/index.ts"
+    "entry": "frontend/index.ts",
+    "extensionPoints": {
+      "global.header.right": { "type": "header" },
+      "global.sidebar.bottom": { "type": "sidebar" }
+    },
+    "components": {
+      "ExtensionPoint": "frontend/components/ExtensionPoint.tsx"
+    },
+    "hooks": {
+      "useExtensions": "frontend/hooks/useExtensions.ts"
+    }
   }
 }

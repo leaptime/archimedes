@@ -2,10 +2,10 @@
 
 namespace Modules\Invoicing\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Modules\Core\Models\ExtendableModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Payment extends Model
+class Payment extends ExtendableModel
 {
     use HasFactory;
 

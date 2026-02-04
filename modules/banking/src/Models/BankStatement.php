@@ -2,12 +2,12 @@
 
 namespace Modules\Banking\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Modules\Core\Models\ExtendableModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class BankStatement extends Model
+class BankStatement extends ExtendableModel
 {
     use SoftDeletes;
 

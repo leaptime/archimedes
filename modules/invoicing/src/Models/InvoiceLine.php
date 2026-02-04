@@ -2,12 +2,12 @@
 
 namespace Modules\Invoicing\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Modules\Core\Models\ExtendableModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class InvoiceLine extends Model
+class InvoiceLine extends ExtendableModel
 {
     use HasFactory;
 

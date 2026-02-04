@@ -32,11 +32,46 @@
   
   "migrations": "database/migrations",
   
+  "models": {
+    "Invoice": {
+      "class": "Modules\\Invoicing\\Models\\Invoice",
+      "table": "invoices",
+      "extends": "ExtendableModel"
+    },
+    "InvoiceLine": {
+      "class": "Modules\\Invoicing\\Models\\InvoiceLine",
+      "table": "invoice_items",
+      "extends": "ExtendableModel"
+    },
+    "Product": {
+      "class": "Modules\\Invoicing\\Models\\Product",
+      "table": "products",
+      "extends": "ExtendableModel"
+    },
+    "Tax": {
+      "class": "Modules\\Invoicing\\Models\\Tax",
+      "table": "taxes",
+      "extends": "ExtendableModel"
+    },
+    "Payment": {
+      "class": "Modules\\Invoicing\\Models\\Payment",
+      "table": "payments",
+      "extends": "ExtendableModel"
+    }
+  },
+  
   "frontend": {
-    "entry": "frontend/index.ts",
     "pages": {
-      "/invoices": "frontend/pages/InvoicesPage.tsx",
-      "/invoices/:id": "frontend/pages/InvoiceDetailPage.tsx"
+      "/invoices": "pages/invoices.tsx",
+      "/invoices/new": "pages/invoice-form.tsx",
+      "/invoices/:id": "pages/invoice-detail.tsx",
+      "/invoices/:id/edit": "pages/invoice-form.tsx"
+    },
+    "extensionPoints": {
+      "invoices.list.filters": { "type": "filters", "description": "Additional list filters" },
+      "invoices.list.bulk-actions": { "type": "actions", "description": "Bulk actions for selected items" },
+      "invoices.detail.sidebar": { "type": "sidebar", "description": "Additional sidebar panels (e.g., EDI status)" },
+      "invoices.detail.below": { "type": "content", "description": "Full-width content below main grid" }
     },
     "navigation": {
       "main": [

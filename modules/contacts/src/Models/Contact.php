@@ -15,6 +15,11 @@ class Contact extends ExtendableModel
 
     protected $table = 'contacts';
 
+    /**
+     * Model identifier for permission system
+     */
+    public const MODEL_IDENTIFIER = 'contacts.contact';
+
     // Address types (like Odoo)
     public const TYPE_CONTACT = 'contact';
     public const TYPE_INVOICE = 'invoice';

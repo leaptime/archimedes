@@ -1,38 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import AppLayout from '@/layouts/app-layout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+    ModulePage,
+    ModuleStats,
+    ModuleList,
+    ModuleFilters,
+    ModuleSearch,
+    ModuleEmptyState,
+    SelectField,
+    ExtensionPoint,
+    ListExtensionSlot,
+    type Column,
+    type Action,
+    type StatCard,
+} from '@/components/modules';
+import {
     Plus,
-    Search,
-    MoreHorizontal,
     FileText,
     Send,
     Copy,
@@ -40,13 +27,9 @@ import {
     Eye,
     DollarSign,
     Clock,
-    CheckCircle2,
-    XCircle,
     AlertCircle,
     ArrowUpRight,
     ArrowDownLeft,
-    Filter,
-    Download,
 } from 'lucide-react';
 
 interface Invoice {
@@ -55,51 +38,33 @@ interface Invoice {
     move_type: string;
     state: string;
     payment_state: string;
-    contact: {
-        id: number;
-        name: string;
-        company?: string;
-    };
+    contact: { id: number; name: string; };
     invoice_date: string;
     invoice_date_due: string;
     amount_total: number;
     amount_residual: number;
-    currency?: {
-        code: string;
-        symbol: string;
-    };
+    currency?: { code: string; symbol: string; };
 }
 
 interface Stats {
     total_count: number;
     draft_count: number;
-    posted_count: number;
-    paid_count: number;
     overdue_count: number;
     total_amount: number;
     outstanding_amount: number;
     overdue_amount: number;
 }
 
-const MOVE_TYPE_LABELS: Record<string, string> = {
-    out_invoice: 'Invoice',
-    out_refund: 'Credit Note',
-    in_invoice: 'Bill',
-    in_refund: 'Refund',
-};
-
-const STATE_BADGES: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+const STATE_BADGES: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' }> = {
     draft: { label: 'Draft', variant: 'secondary' },
     posted: { label: 'Posted', variant: 'default' },
     cancel: { label: 'Cancelled', variant: 'destructive' },
 };
 
-const PAYMENT_STATE_BADGES: Record<string, { label: string; className: string }> = {
+const PAYMENT_BADGES: Record<string, { label: string; className: string }> = {
     not_paid: { label: 'Not Paid', className: 'bg-yellow-100 text-yellow-800' },
     partial: { label: 'Partial', className: 'bg-blue-100 text-blue-800' },
     paid: { label: 'Paid', className: 'bg-green-100 text-green-800' },
-    in_payment: { label: 'In Payment', className: 'bg-purple-100 text-purple-800' },
-    reversed: { label: 'Reversed', className: 'bg-gray-100 text-gray-800' },
 };
 
 export default function InvoicesPage() {
@@ -111,20 +76,15 @@ export default function InvoicesPage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState(searchParams.get('search') || '');
     const [typeFilter, setTypeFilter] = useState(searchParams.get('type') || 'sale');
-    const [stateFilter, setStateFilter] = useState(searchParams.get('state') || '');
-    const [paymentFilter, setPaymentFilter] = useState(searchParams.get('payment_state') || '');
-    const [pagination, setPagination] = useState({
-        currentPage: 1,
-        lastPage: 1,
-        total: 0,
-    });
+    const [stateFilter, setStateFilter] = useState<string | undefined>(searchParams.get('state') || undefined);
+    const [paymentFilter, setPaymentFilter] = useState<string | undefined>(searchParams.get('payment_state') || undefined);
+    const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
 
     useEffect(() => {
-        loadInvoices();
-        loadStats();
+        loadData();
     }, [typeFilter, stateFilter, paymentFilter, searchParams]);
 
-    const loadInvoices = async () => {
+    const loadData = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
@@ -134,410 +94,251 @@ export default function InvoicesPage() {
             if (paymentFilter) params.set('payment_state', paymentFilter);
             params.set('page', searchParams.get('page') || '1');
 
-            const response = await fetch(`/api/invoices?${params}`);
-            const data = await response.json();
-            setInvoices(data.data || []);
+            const [invoicesRes, statsRes] = await Promise.all([
+                fetch(`/api/invoices?${params}`),
+                fetch(`/api/invoices/stats?type=${typeFilter}`),
+            ]);
+
+            const invoicesData = await invoicesRes.json();
+            const statsData = await statsRes.json();
+
+            setInvoices(invoicesData.data || []);
             setPagination({
-                currentPage: data.meta?.current_page || 1,
-                lastPage: data.meta?.last_page || 1,
-                total: data.meta?.total || 0,
+                currentPage: invoicesData.meta?.current_page || 1,
+                lastPage: invoicesData.meta?.last_page || 1,
+                total: invoicesData.meta?.total || 0,
             });
+            setStats(statsData);
         } catch (error) {
-            console.error('Failed to load invoices:', error);
+            console.error('Failed to load data:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    const loadStats = async () => {
-        try {
-            const response = await fetch(`/api/invoices/stats?type=${typeFilter}`);
-            const data = await response.json();
-            setStats(data.data);
-        } catch (error) {
-            console.error('Failed to load stats:', error);
-        }
+    const formatCurrency = (amount: number | string | undefined | null, currency?: { symbol: string }) => {
+        const num = typeof amount === 'string' ? parseFloat(amount) : (amount ?? 0);
+        return `${currency?.symbol || '$'}${(isNaN(num) ? 0 : num).toFixed(2)}`;
     };
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        const params = new URLSearchParams(searchParams);
-        if (search) {
-            params.set('search', search);
-        } else {
-            params.delete('search');
-        }
-        params.set('page', '1');
-        setSearchParams(params);
-        loadInvoices();
-    };
+    // Stats cards configuration
+    const statCards: StatCard[] = stats ? [
+        {
+            title: 'Total',
+            value: formatCurrency(stats.total_amount),
+            subtitle: `${stats.total_count ?? 0} invoices`,
+            icon: <FileText className="h-4 w-4" />,
+        },
+        {
+            title: 'Draft',
+            value: (stats.draft_count ?? 0).toString(),
+            subtitle: 'Pending confirmation',
+            icon: <Clock className="h-4 w-4" />,
+        },
+        {
+            title: 'Outstanding',
+            value: formatCurrency(stats.outstanding_amount),
+            subtitle: 'Awaiting payment',
+            icon: <DollarSign className="h-4 w-4" />,
+        },
+        {
+            title: 'Overdue',
+            value: formatCurrency(stats.overdue_amount),
+            subtitle: `${stats.overdue_count ?? 0} overdue`,
+            icon: <AlertCircle className="h-4 w-4" />,
+            variant: (stats.overdue_count ?? 0) > 0 ? 'danger' : 'default',
+        },
+    ] : [];
 
-    const handleAction = async (invoice: Invoice, action: string) => {
-        try {
-            if (action === 'view') {
-                navigate(`/invoices/${invoice.id}`);
-                return;
-            }
-            if (action === 'edit') {
-                navigate(`/invoices/${invoice.id}/edit`);
-                return;
-            }
+    // Table columns configuration
+    const columns: Column<Invoice>[] = [
+        {
+            key: 'number',
+            header: 'Number',
+            render: (inv) => (
+                <span className="font-medium">{inv.number || 'Draft'}</span>
+            ),
+        },
+        {
+            key: 'contact',
+            header: 'Customer',
+            render: (inv) => inv.contact?.name || '-',
+        },
+        {
+            key: 'invoice_date',
+            header: 'Date',
+            render: (inv) => inv.invoice_date ? format(new Date(inv.invoice_date), 'MMM d, yyyy') : '-',
+        },
+        {
+            key: 'invoice_date_due',
+            header: 'Due Date',
+            render: (inv) => inv.invoice_date_due ? format(new Date(inv.invoice_date_due), 'MMM d, yyyy') : '-',
+        },
+        {
+            key: 'state',
+            header: 'Status',
+            render: (inv) => {
+                const config = STATE_BADGES[inv.state];
+                return config ? <Badge variant={config.variant}>{config.label}</Badge> : inv.state;
+            },
+        },
+        {
+            key: 'payment_state',
+            header: 'Payment',
+            render: (inv) => {
+                if (inv.state !== 'posted') return null;
+                const config = PAYMENT_BADGES[inv.payment_state];
+                return config ? <Badge className={config.className}>{config.label}</Badge> : null;
+            },
+        },
+        {
+            key: 'amount_total',
+            header: 'Total',
+            className: 'text-right',
+            render: (inv) => formatCurrency(inv.amount_total, inv.currency),
+        },
+        {
+            key: 'amount_residual',
+            header: 'Due',
+            className: 'text-right',
+            render: (inv) => inv.amount_residual > 0 ? formatCurrency(inv.amount_residual, inv.currency) : '-',
+        },
+    ];
 
-            const response = await fetch(`/api/invoices/${invoice.id}/${action}`, {
-                method: 'POST',
-            });
+    // Row actions configuration
+    const actions: Action<Invoice>[] = [
+        {
+            label: 'View',
+            icon: <Eye className="h-4 w-4" />,
+            onClick: (inv) => navigate(`/invoices/${inv.id}`),
+        },
+        {
+            label: 'Send',
+            icon: <Send className="h-4 w-4" />,
+            onClick: (inv) => console.log('Send', inv.id),
+            hidden: (inv) => inv.state !== 'posted',
+        },
+        {
+            label: 'Duplicate',
+            icon: <Copy className="h-4 w-4" />,
+            onClick: (inv) => console.log('Duplicate', inv.id),
+        },
+        {
+            label: 'Delete',
+            icon: <Trash2 className="h-4 w-4" />,
+            onClick: (inv) => console.log('Delete', inv.id),
+            variant: 'destructive',
+            separator: true,
+            hidden: (inv) => inv.state !== 'draft',
+        },
+    ];
 
-            if (response.ok) {
-                loadInvoices();
-                loadStats();
-            }
-        } catch (error) {
-            console.error(`Failed to ${action} invoice:`, error);
-        }
-    };
-
-    const handleDelete = async (invoice: Invoice) => {
-        if (!confirm('Are you sure you want to delete this invoice?')) return;
-
-        try {
-            const response = await fetch(`/api/invoices/${invoice.id}`, {
-                method: 'DELETE',
-            });
-            if (response.ok) {
-                loadInvoices();
-                loadStats();
-            }
-        } catch (error) {
-            console.error('Failed to delete invoice:', error);
-        }
-    };
-
-    const formatCurrency = (amount: number, currency?: { symbol: string }) => {
-        const symbol = currency?.symbol || '$';
-        return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    };
-
-    const isOverdue = (invoice: Invoice) => {
-        return invoice.state === 'posted' &&
-            invoice.payment_state !== 'paid' &&
-            new Date(invoice.invoice_date_due) < new Date();
-    };
+    const isSales = typeFilter === 'sale';
+    const hasFilters = !!stateFilter || !!paymentFilter || !!search;
 
     return (
-        <AppLayout>
-            <div className="space-y-6 p-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold">
-                            {typeFilter === 'sale' ? 'Invoices' : 'Bills'}
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Manage your {typeFilter === 'sale' ? 'customer invoices' : 'vendor bills'}
-                        </p>
-                    </div>
-                    <Button onClick={() => navigate('/invoices/new')}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New {typeFilter === 'sale' ? 'Invoice' : 'Bill'}
-                    </Button>
-                </div>
+        <ModulePage
+            title={isSales ? 'Invoices' : 'Bills'}
+            subtitle={`Manage your ${isSales ? 'customer invoices' : 'vendor bills'}`}
+            actions={
+                <Button onClick={() => navigate('/invoices/new')}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New {isSales ? 'Invoice' : 'Bill'}
+                </Button>
+            }
+        >
+            {/* Type Tabs */}
+            <Tabs value={typeFilter} onValueChange={setTypeFilter}>
+                <TabsList>
+                    <TabsTrigger value="sale" className="gap-2">
+                        <ArrowUpRight className="h-4 w-4" />
+                        Sales
+                    </TabsTrigger>
+                    <TabsTrigger value="purchase" className="gap-2">
+                        <ArrowDownLeft className="h-4 w-4" />
+                        Purchases
+                    </TabsTrigger>
+                </TabsList>
+            </Tabs>
 
-                {/* Type Tabs */}
-                <Tabs value={typeFilter} onValueChange={setTypeFilter}>
-                    <TabsList>
-                        <TabsTrigger value="sale" className="gap-2">
-                            <ArrowUpRight className="h-4 w-4" />
-                            Sales
-                        </TabsTrigger>
-                        <TabsTrigger value="purchase" className="gap-2">
-                            <ArrowDownLeft className="h-4 w-4" />
-                            Purchases
-                        </TabsTrigger>
-                    </TabsList>
-                </Tabs>
+            {/* Stats Cards */}
+            <ModuleStats stats={statCards} columns={4} loading={loading && !stats} />
 
-                {/* Stats Cards */}
-                {stats && (
-                    <div className="grid gap-4 md:grid-cols-4">
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium">Total</CardTitle>
-                                <FileText className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{formatCurrency(stats.total_amount)}</div>
-                                <p className="text-xs text-muted-foreground">
-                                    {stats.total_count} {typeFilter === 'sale' ? 'invoices' : 'bills'}
-                                </p>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium">Draft</CardTitle>
-                                <Clock className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{stats.draft_count}</div>
-                                <p className="text-xs text-muted-foreground">Pending confirmation</p>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
-                                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{formatCurrency(stats.outstanding_amount)}</div>
-                                <p className="text-xs text-muted-foreground">Awaiting payment</p>
-                            </CardContent>
-                        </Card>
-                        <Card className={stats.overdue_count > 0 ? 'border-red-200' : ''}>
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium">Overdue</CardTitle>
-                                <AlertCircle className={`h-4 w-4 ${stats.overdue_count > 0 ? 'text-red-500' : 'text-muted-foreground'}`} />
-                            </CardHeader>
-                            <CardContent>
-                                <div className={`text-2xl font-bold ${stats.overdue_count > 0 ? 'text-red-600' : ''}`}>
-                                    {formatCurrency(stats.overdue_amount)}
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    {stats.overdue_count} overdue
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
+            {/* Filters */}
+            <ModuleFilters
+                hasActiveFilters={hasFilters}
+                onClear={() => {
+                    setSearch('');
+                    setStateFilter(undefined);
+                    setPaymentFilter(undefined);
+                }}
+            >
+                <ModuleSearch
+                    value={search}
+                    onChange={setSearch}
+                    onSearch={loadData}
+                    placeholder="Search invoices..."
+                    className="w-64"
+                />
+                <SelectField
+                    name="state"
+                    value={stateFilter}
+                    onChange={setStateFilter}
+                    options={[
+                        { value: 'draft', label: 'Draft' },
+                        { value: 'posted', label: 'Posted' },
+                        { value: 'cancel', label: 'Cancelled' },
+                    ]}
+                    placeholder="All States"
+                    clearLabel="All States"
+                    className="w-40"
+                />
+                <SelectField
+                    name="payment"
+                    value={paymentFilter}
+                    onChange={setPaymentFilter}
+                    options={[
+                        { value: 'not_paid', label: 'Not Paid' },
+                        { value: 'partial', label: 'Partial' },
+                        { value: 'paid', label: 'Paid' },
+                    ]}
+                    placeholder="All Payments"
+                    clearLabel="All Payments"
+                    className="w-40"
+                />
+                {/* Extension point for additional filters (e.g., Italian EDI status) */}
+                <ExtensionPoint 
+                    name="invoices.list.filters" 
+                    context={{ typeFilter, stateFilter, paymentFilter }}
+                />
+            </ModuleFilters>
 
-                {/* Filters */}
-                <div className="flex flex-wrap items-center gap-4">
-                    <form onSubmit={handleSearch} className="flex gap-2">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                                placeholder="Search invoices..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="w-64 pl-9"
-                            />
-                        </div>
-                        <Button type="submit" variant="secondary">
-                            Search
-                        </Button>
-                    </form>
+            {/* Extension point for bulk actions */}
+            <ListExtensionSlot
+                name="invoices.list.bulk-actions"
+                items={invoices}
+                onRefresh={loadData}
+            />
 
-                    <Select value={stateFilter} onValueChange={setStateFilter}>
-                        <SelectTrigger className="w-36">
-                            <SelectValue placeholder="All States" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="">All States</SelectItem>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="posted">Posted</SelectItem>
-                            <SelectItem value="cancel">Cancelled</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                        <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Payment Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="">All Payments</SelectItem>
-                            <SelectItem value="not_paid">Not Paid</SelectItem>
-                            <SelectItem value="partial">Partial</SelectItem>
-                            <SelectItem value="paid">Paid</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {/* Table */}
-                <Card>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Number</TableHead>
-                                <TableHead>{typeFilter === 'sale' ? 'Customer' : 'Vendor'}</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Due Date</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Payment</TableHead>
-                                <TableHead className="text-right">Total</TableHead>
-                                <TableHead className="text-right">Due</TableHead>
-                                <TableHead className="w-10"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={9} className="text-center py-8">
-                                        Loading...
-                                    </TableCell>
-                                </TableRow>
-                            ) : invoices.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                                        No {typeFilter === 'sale' ? 'invoices' : 'bills'} found
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                invoices.map((invoice) => (
-                                    <TableRow
-                                        key={invoice.id}
-                                        className="cursor-pointer hover:bg-muted/50"
-                                        onClick={() => navigate(`/invoices/${invoice.id}`)}
-                                    >
-                                        <TableCell className="font-medium">
-                                            <div className="flex items-center gap-2">
-                                                {invoice.move_type.includes('refund') && (
-                                                    <Badge variant="outline" className="text-xs">CN</Badge>
-                                                )}
-                                                {invoice.number || 'Draft'}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div>
-                                                <div className="font-medium">{invoice.contact?.name}</div>
-                                                {invoice.contact?.company && (
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {invoice.contact.company}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {invoice.invoice_date && format(new Date(invoice.invoice_date), 'MMM d, yyyy')}
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className={isOverdue(invoice) ? 'text-red-600 font-medium' : ''}>
-                                                {invoice.invoice_date_due && format(new Date(invoice.invoice_date_due), 'MMM d, yyyy')}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={STATE_BADGES[invoice.state]?.variant || 'secondary'}>
-                                                {STATE_BADGES[invoice.state]?.label || invoice.state}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            {invoice.state === 'posted' && (
-                                                <Badge className={PAYMENT_STATE_BADGES[invoice.payment_state]?.className}>
-                                                    {PAYMENT_STATE_BADGES[invoice.payment_state]?.label || invoice.payment_state}
-                                                </Badge>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right font-medium">
-                                            {formatCurrency(invoice.amount_total, invoice.currency)}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {invoice.amount_residual > 0 && (
-                                                <span className={isOverdue(invoice) ? 'text-red-600 font-medium' : ''}>
-                                                    {formatCurrency(invoice.amount_residual, invoice.currency)}
-                                                </span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell onClick={(e) => e.stopPropagation()}>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => handleAction(invoice, 'view')}>
-                                                        <Eye className="mr-2 h-4 w-4" />
-                                                        View
-                                                    </DropdownMenuItem>
-                                                    {invoice.state === 'draft' && (
-                                                        <>
-                                                            <DropdownMenuItem onClick={() => handleAction(invoice, 'edit')}>
-                                                                <FileText className="mr-2 h-4 w-4" />
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleAction(invoice, 'post')}>
-                                                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                                                Confirm
-                                                            </DropdownMenuItem>
-                                                        </>
-                                                    )}
-                                                    {invoice.state === 'posted' && (
-                                                        <>
-                                                            <DropdownMenuItem onClick={() => handleAction(invoice, 'send')}>
-                                                                <Send className="mr-2 h-4 w-4" />
-                                                                Send
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}?action=payment`)}>
-                                                                <DollarSign className="mr-2 h-4 w-4" />
-                                                                Register Payment
-                                                            </DropdownMenuItem>
-                                                        </>
-                                                    )}
-                                                    <DropdownMenuItem onClick={() => handleAction(invoice, 'duplicate')}>
-                                                        <Copy className="mr-2 h-4 w-4" />
-                                                        Duplicate
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    {invoice.state !== 'cancel' && invoice.payment_state === 'not_paid' && (
-                                                        <DropdownMenuItem
-                                                            onClick={() => handleAction(invoice, 'cancel')}
-                                                            className="text-destructive"
-                                                        >
-                                                            <XCircle className="mr-2 h-4 w-4" />
-                                                            Cancel
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    {(invoice.state === 'draft' || invoice.state === 'cancel') && (
-                                                        <DropdownMenuItem
-                                                            onClick={() => handleDelete(invoice)}
-                                                            className="text-destructive"
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Delete
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </Card>
-
-                {/* Pagination */}
-                {pagination.lastPage > 1 && (
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">
-                            Showing {invoices.length} of {pagination.total} results
-                        </p>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={pagination.currentPage === 1}
-                                onClick={() => {
-                                    const params = new URLSearchParams(searchParams);
-                                    params.set('page', String(pagination.currentPage - 1));
-                                    setSearchParams(params);
-                                }}
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={pagination.currentPage === pagination.lastPage}
-                                onClick={() => {
-                                    const params = new URLSearchParams(searchParams);
-                                    params.set('page', String(pagination.currentPage + 1));
-                                    setSearchParams(params);
-                                }}
-                            >
-                                Next
-                            </Button>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </AppLayout>
+            {/* Invoice List */}
+            <ModuleList
+                data={invoices}
+                columns={columns}
+                actions={actions}
+                keyField="id"
+                loading={loading}
+                emptyMessage={hasFilters ? 'No invoices match your filters' : 'No invoices yet'}
+                emptyIcon={<FileText className="h-12 w-12" />}
+                onRowClick={(inv) => navigate(`/invoices/${inv.id}`)}
+                pagination={{
+                    ...pagination,
+                    onPageChange: (page) => {
+                        const params = new URLSearchParams(searchParams);
+                        params.set('page', page.toString());
+                        setSearchParams(params);
+                    },
+                }}
+            />
+        </ModulePage>
     );
 }

@@ -19,6 +19,10 @@ class InvoicingServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->loadRoutesFrom(__DIR__ . '/routes/api.php');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'invoicing');
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+
         $this->publishes([
             __DIR__ . '/../config/invoicing.php' => config_path('invoicing.php'),
         ], 'invoicing-config');

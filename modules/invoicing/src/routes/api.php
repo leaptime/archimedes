@@ -22,6 +22,16 @@ Route::middleware(['web', 'auth:sanctum'])->prefix('api')->group(function () {
     Route::post('/invoices/{invoice}/credit-note', [InvoiceController::class, 'createCreditNote']);
     Route::post('/invoices/{invoice}/register-payment', [InvoiceController::class, 'registerPayment']);
     
+    // PDF endpoints
+    Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf']);
+    Route::get('/invoices/{invoice}/pdf/view', [InvoiceController::class, 'viewPdf']);
+    Route::get('/invoices/{invoice}/pdf/preview', [InvoiceController::class, 'previewPdf']);
+    
+    // Email endpoints
+    Route::post('/invoices/{invoice}/email', [InvoiceController::class, 'sendEmail']);
+    Route::get('/invoices/{invoice}/email/preview', [InvoiceController::class, 'emailPreview']);
+    Route::post('/invoices/{invoice}/reminder', [InvoiceController::class, 'sendReminder']);
+    
     // Legacy endpoint
     Route::post('/invoices/{invoice}/mark-paid', [InvoiceController::class, 'registerPayment']);
 

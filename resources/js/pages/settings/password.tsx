@@ -1,34 +1,63 @@
-import { Transition } from '@headlessui/react';
-import { Form, Head } from '@inertiajs/react';
-import { useRef } from 'react';
-import PasswordController from '@/actions/App/Http/Controllers/Settings/PasswordController';
+import { useState, useRef } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import AppLayout from '@/layouts/app-layout';
+import { DashboardLayout } from '@/components/layout';
 import SettingsLayout from '@/layouts/settings/layout';
-import { edit } from '@/routes/user-password';
-import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Password settings',
-        href: edit().url,
-    },
-];
 
 export default function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+    
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [password, setPassword] = useState('');
+    const [passwordConfirmation, setPasswordConfirmation] = useState('');
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [processing, setProcessing] = useState(false);
+    const [recentlySuccessful, setRecentlySuccessful] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setProcessing(true);
+        setErrors({});
+
+        try {
+            const response = await fetch('/api/user/password', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    current_password: currentPassword,
+                    password,
+                    password_confirmation: passwordConfirmation,
+                }),
+            });
+
+            if (response.ok) {
+                setCurrentPassword('');
+                setPassword('');
+                setPasswordConfirmation('');
+                setRecentlySuccessful(true);
+                setTimeout(() => setRecentlySuccessful(false), 2000);
+            } else {
+                const data = await response.json();
+                setErrors(data.errors || {});
+                if (data.errors?.current_password) {
+                    currentPasswordInput.current?.focus();
+                } else {
+                    passwordInput.current?.focus();
+                }
+            }
+        } catch (error) {
+            setErrors({ general: 'An error occurred' });
+        } finally {
+            setProcessing(false);
+        }
+    };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Password settings" />
-
-            <h1 className="sr-only">Password Settings</h1>
-
+        <DashboardLayout>
             <SettingsLayout>
                 <div className="space-y-6">
                     <Heading
@@ -37,112 +66,59 @@ export default function Password() {
                         description="Ensure your account is using a long, random password to stay secure"
                     />
 
-                    <Form
-                        {...PasswordController.update.form()}
-                        options={{
-                            preserveScroll: true,
-                        }}
-                        resetOnError={[
-                            'password',
-                            'password_confirmation',
-                            'current_password',
-                        ]}
-                        resetOnSuccess
-                        onError={(errors) => {
-                            if (errors.password) {
-                                passwordInput.current?.focus();
-                            }
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid gap-2">
+                            <Label htmlFor="current_password">Current Password</Label>
+                            <Input
+                                id="current_password"
+                                type="password"
+                                ref={currentPasswordInput}
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                autoComplete="current-password"
+                            />
+                            <InputError message={errors.current_password} />
+                        </div>
 
-                            if (errors.current_password) {
-                                currentPasswordInput.current?.focus();
-                            }
-                        }}
-                        className="space-y-6"
-                    >
-                        {({ errors, processing, recentlySuccessful }) => (
-                            <>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="current_password">
-                                        Current password
-                                    </Label>
+                        <div className="grid gap-2">
+                            <Label htmlFor="password">New Password</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                ref={passwordInput}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                autoComplete="new-password"
+                            />
+                            <InputError message={errors.password} />
+                        </div>
 
-                                    <Input
-                                        id="current_password"
-                                        ref={currentPasswordInput}
-                                        name="current_password"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="current-password"
-                                        placeholder="Current password"
-                                    />
+                        <div className="grid gap-2">
+                            <Label htmlFor="password_confirmation">Confirm Password</Label>
+                            <Input
+                                id="password_confirmation"
+                                type="password"
+                                value={passwordConfirmation}
+                                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                autoComplete="new-password"
+                            />
+                            <InputError message={errors.password_confirmation} />
+                        </div>
 
-                                    <InputError
-                                        message={errors.current_password}
-                                    />
-                                </div>
+                        <div className="flex items-center gap-4">
+                            <Button type="submit" disabled={processing}>
+                                Save password
+                            </Button>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password">
-                                        New password
-                                    </Label>
-
-                                    <Input
-                                        id="password"
-                                        ref={passwordInput}
-                                        name="password"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="new-password"
-                                        placeholder="New password"
-                                    />
-
-                                    <InputError message={errors.password} />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password_confirmation">
-                                        Confirm password
-                                    </Label>
-
-                                    <Input
-                                        id="password_confirmation"
-                                        name="password_confirmation"
-                                        type="password"
-                                        className="mt-1 block w-full"
-                                        autoComplete="new-password"
-                                        placeholder="Confirm password"
-                                    />
-
-                                    <InputError
-                                        message={errors.password_confirmation}
-                                    />
-                                </div>
-
-                                <div className="flex items-center gap-4">
-                                    <Button
-                                        disabled={processing}
-                                        data-test="update-password-button"
-                                    >
-                                        Save password
-                                    </Button>
-
-                                    <Transition
-                                        show={recentlySuccessful}
-                                        enter="transition ease-in-out"
-                                        enterFrom="opacity-0"
-                                        leave="transition ease-in-out"
-                                        leaveTo="opacity-0"
-                                    >
-                                        <p className="text-sm text-neutral-600">
-                                            Saved
-                                        </p>
-                                    </Transition>
-                                </div>
-                            </>
-                        )}
-                    </Form>
+                            {recentlySuccessful && (
+                                <p className="text-sm text-muted-foreground">
+                                    Saved.
+                                </p>
+                            )}
+                        </div>
+                    </form>
                 </div>
             </SettingsLayout>
-        </AppLayout>
+        </DashboardLayout>
     );
 }

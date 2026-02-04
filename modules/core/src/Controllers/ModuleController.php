@@ -5,6 +5,7 @@ namespace Modules\Core\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Modules\Core\Services\ModuleRegistry;
+use Modules\Core\Services\ModuleValidator;
 use Modules\Core\Services\ExtensionManager;
 
 class ModuleController extends Controller
@@ -529,6 +530,38 @@ class ModuleController extends Controller
                 'inactive' => count($modules) - count($loaded),
                 'byCategory' => $byCategory,
             ],
+        ]);
+    }
+
+    /**
+     * Get module compliance report
+     */
+    public function compliance(ModuleValidator $validator): JsonResponse
+    {
+        $report = $validator->getComplianceReport();
+
+        return response()->json([
+            'data' => $report,
+        ]);
+    }
+
+    /**
+     * Get compliance status for a specific module
+     */
+    public function moduleCompliance(string $moduleName, ModuleValidator $validator): JsonResponse
+    {
+        $modulePath = base_path("modules/{$moduleName}");
+        
+        if (!is_dir($modulePath)) {
+            return response()->json([
+                'message' => 'Module not found',
+            ], 404);
+        }
+
+        $result = $validator->validate($modulePath);
+
+        return response()->json([
+            'data' => $result->toArray(),
         ]);
     }
 }

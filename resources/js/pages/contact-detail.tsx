@@ -50,6 +50,7 @@ import {
     ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ExtensionPoint, DetailExtensionSlot } from '@/components/modules';
 import { AddressManager, type Address } from '@modules/contacts/frontend/components/AddressManager';
 import { BankAccountManager, type BankAccount } from '@modules/contacts/frontend/components/BankAccountManager';
 
@@ -541,6 +542,11 @@ export default function ContactDetail() {
                                     <TabsTrigger value="notes" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
                                         Notes
                                     </TabsTrigger>
+                                    {/* Extension point for additional tabs from other modules */}
+                                    <ExtensionPoint 
+                                        name="contacts.detail.tabs" 
+                                        context={{ contact, activeTab, setActiveTab }}
+                                    />
                                 </TabsList>
 
                                 <TabsContent value="overview" className="p-6">
@@ -686,8 +692,23 @@ export default function ContactDetail() {
                                         )}
                                     </div>
                                 </TabsContent>
+
+                                {/* Extension point for additional tab content from other modules */}
+                                <DetailExtensionSlot
+                                    name="contacts.detail.tab-content"
+                                    entity={contact}
+                                    onRefresh={() => refetch()}
+                                />
                             </Tabs>
                         </motion.div>
+
+                        {/* Extension point for additional sections below tabs */}
+                        <DetailExtensionSlot
+                            name="contacts.detail.below-tabs"
+                            entity={contact}
+                            onRefresh={() => refetch()}
+                            className="space-y-6"
+                        />
                     </div>
                 ) : null}
 

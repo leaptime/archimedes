@@ -2,31 +2,31 @@ import { test, expect } from '../../core/tests/fixtures';
 
 test.describe('Banking Module', () => {
     test.describe('Dashboard', () => {
-        test('should display banking page', async ({ authenticatedPage: page }) => {
+        test('should display banking page', async ({ page }) => {
             await page.goto('/banking');
             await expect(page.locator('h1')).toContainText('Banking');
         });
 
-        test('should show summary cards', async ({ authenticatedPage: page }) => {
+        test('should show summary cards', async ({ page }) => {
             await page.goto('/banking');
             
             // Check for summary cards (may show zero values if no data)
             await expect(page.locator('text=/Total Balance|Unreconciled|Accounts/')).toBeVisible();
         });
 
-        test('should have Add Account button', async ({ authenticatedPage: page }) => {
+        test('should have Add Account button', async ({ page }) => {
             await page.goto('/banking');
             
             await expect(page.getByRole('button', { name: /Add Account/i })).toBeVisible();
         });
 
-        test('should have Import button', async ({ authenticatedPage: page }) => {
+        test('should have Import button', async ({ page }) => {
             await page.goto('/banking');
             
             await expect(page.getByRole('button', { name: /Import/i })).toBeVisible();
         });
 
-        test('should have Connect Bank button', async ({ authenticatedPage: page }) => {
+        test('should have Connect Bank button', async ({ page }) => {
             await page.goto('/banking');
             
             await expect(page.getByRole('button', { name: /Connect Bank/i })).toBeVisible();
@@ -34,7 +34,7 @@ test.describe('Banking Module', () => {
     });
 
     test.describe('Bank Account Management', () => {
-        test('should open new account dialog', async ({ authenticatedPage: page }) => {
+        test('should open new account dialog', async ({ page }) => {
             await page.goto('/banking');
             
             await page.getByRole('button', { name: /Add Account/i }).click();
@@ -43,7 +43,7 @@ test.describe('Banking Module', () => {
             await expect(page.locator('text=/New Bank Account|Add Account/i')).toBeVisible();
         });
 
-        test('should create a new bank account', async ({ authenticatedPage: page }) => {
+        test('should create a new bank account', async ({ page }) => {
             await page.goto('/banking');
             
             await page.getByRole('button', { name: /Add Account/i }).click();
@@ -68,7 +68,7 @@ test.describe('Banking Module', () => {
     });
 
     test.describe('Import Wizard', () => {
-        test('should open import wizard', async ({ authenticatedPage: page }) => {
+        test('should open import wizard', async ({ page }) => {
             await page.goto('/banking');
             
             await page.getByRole('button', { name: /Import/i }).click();
@@ -77,7 +77,7 @@ test.describe('Banking Module', () => {
             await expect(page.locator('text=/Import Transactions|Import Statement/i')).toBeVisible();
         });
 
-        test('should show supported file formats', async ({ authenticatedPage: page }) => {
+        test('should show supported file formats', async ({ page }) => {
             await page.goto('/banking');
             
             await page.getByRole('button', { name: /Import/i }).click();
@@ -86,7 +86,7 @@ test.describe('Banking Module', () => {
             await expect(page.locator('text=/CSV|OFX|QIF|CAMT/i')).toBeVisible();
         });
 
-        test('should have file upload area', async ({ authenticatedPage: page }) => {
+        test('should have file upload area', async ({ page }) => {
             await page.goto('/banking');
             
             await page.getByRole('button', { name: /Import/i }).click();
@@ -98,7 +98,7 @@ test.describe('Banking Module', () => {
     });
 
     test.describe('Open Banking Connection', () => {
-        test('should open connection wizard', async ({ authenticatedPage: page }) => {
+        test('should open connection wizard', async ({ page }) => {
             await page.goto('/banking');
             
             await page.getByRole('button', { name: /Connect Bank/i }).click();
@@ -107,7 +107,7 @@ test.describe('Banking Module', () => {
             await expect(page.locator('text=/Connect Bank Account/i')).toBeVisible();
         });
 
-        test('should show provider selection step', async ({ authenticatedPage: page }) => {
+        test('should show provider selection step', async ({ page }) => {
             await page.goto('/banking');
             
             await page.getByRole('button', { name: /Connect Bank/i }).click();
@@ -117,7 +117,7 @@ test.describe('Banking Module', () => {
             await expect(dialog.locator('text=/provider|Plaid|GoCardless|No providers configured/i')).toBeVisible();
         });
 
-        test('should close wizard on cancel', async ({ authenticatedPage: page }) => {
+        test('should close wizard on cancel', async ({ page }) => {
             await page.goto('/banking');
             
             await page.getByRole('button', { name: /Connect Bank/i }).click();
@@ -131,14 +131,14 @@ test.describe('Banking Module', () => {
     });
 
     test.describe('Transaction List', () => {
-        test('should display transactions section', async ({ authenticatedPage: page }) => {
+        test('should display transactions section', async ({ page }) => {
             await page.goto('/banking');
             
             // Look for transactions section
             await expect(page.locator('text=/Recent Transactions|Transactions|No transactions/i')).toBeVisible();
         });
 
-        test('should have filter controls', async ({ authenticatedPage: page }) => {
+        test('should have filter controls', async ({ page }) => {
             await page.goto('/banking');
             
             // Check for date range or status filters
@@ -148,7 +148,7 @@ test.describe('Banking Module', () => {
     });
 
     test.describe('Reconciliation', () => {
-        test('should show reconciliation queue link or section', async ({ authenticatedPage: page }) => {
+        test('should show reconciliation queue link or section', async ({ page }) => {
             await page.goto('/banking');
             
             // Check for reconciliation-related UI
@@ -159,7 +159,7 @@ test.describe('Banking Module', () => {
 });
 
 test.describe('Banking API', () => {
-    test('should return dashboard data', async ({ authenticatedPage: page }) => {
+    test('should return dashboard data', async ({ page }) => {
         const response = await page.request.get('/api/banking/dashboard');
         
         expect(response.ok()).toBe(true);
@@ -170,7 +170,7 @@ test.describe('Banking API', () => {
         expect(data.data).toHaveProperty('accounts');
     });
 
-    test('should return open banking providers', async ({ authenticatedPage: page }) => {
+    test('should return open banking providers', async ({ page }) => {
         const response = await page.request.get('/api/banking/open-banking/providers');
         
         expect(response.ok()).toBe(true);
@@ -180,7 +180,7 @@ test.describe('Banking API', () => {
         expect(Array.isArray(data.data)).toBe(true);
     });
 
-    test('should return connections list', async ({ authenticatedPage: page }) => {
+    test('should return connections list', async ({ page }) => {
         const response = await page.request.get('/api/banking/open-banking/connections');
         
         expect(response.ok()).toBe(true);
@@ -190,7 +190,7 @@ test.describe('Banking API', () => {
         expect(Array.isArray(data.data)).toBe(true);
     });
 
-    test('should create bank account via API', async ({ authenticatedPage: page }) => {
+    test('should create bank account via API', async ({ page }) => {
         const response = await page.request.post('/api/banking/accounts', {
             data: {
                 name: 'API Test Account',
@@ -206,7 +206,7 @@ test.describe('Banking API', () => {
         expect(data.data.name).toBe('API Test Account');
     });
 
-    test('should return reconcile models', async ({ authenticatedPage: page }) => {
+    test('should return reconcile models', async ({ page }) => {
         const response = await page.request.get('/api/banking/reconcile-models');
         
         expect(response.ok()).toBe(true);
@@ -217,21 +217,21 @@ test.describe('Banking API', () => {
 });
 
 test.describe('Banking Callback Page', () => {
-    test('should render callback page', async ({ authenticatedPage: page }) => {
+    test('should render callback page', async ({ page }) => {
         await page.goto('/banking/callback');
         
         // Should show processing or error state (no valid session)
         await expect(page.locator('text=/Connection|Expired|Processing|Error/i')).toBeVisible();
     });
 
-    test('should show error for missing session', async ({ authenticatedPage: page }) => {
+    test('should show error for missing session', async ({ page }) => {
         await page.goto('/banking/callback');
         
         // Without a pending connection in sessionStorage, should show error
         await expect(page.locator('text=/Session Expired|start the connection process again/i')).toBeVisible({ timeout: 5000 });
     });
 
-    test('should have back to banking button', async ({ authenticatedPage: page }) => {
+    test('should have back to banking button', async ({ page }) => {
         await page.goto('/banking/callback');
         
         // Wait for error state

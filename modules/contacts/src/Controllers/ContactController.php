@@ -15,15 +15,24 @@ use Modules\Contacts\Models\ContactAddress;
 use Modules\Contacts\Models\ContactBankAccount;
 use Modules\Contacts\Models\ContactCustomField;
 use Modules\Core\Http\Resources\DynamicResource;
+use Modules\Core\Traits\HasModelPermissions;
 
 class ContactController extends Controller
 {
+    use HasModelPermissions;
+
+    protected ?string $modelIdentifier = 'contacts.contact';
     /**
      * Display a listing of contacts.
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Contact::query()->contacts(); // Only main contacts, not addresses
+        // Check read permission
+        if ($denied = $this->authorizeAccess('read')) {
+            return $denied;
+        }
+
+        $query = Contact::query()->contacts()->withRecordRules('read'); // Apply record rules
 
         // Search
         if ($search = $request->query('search')) {
@@ -102,6 +111,11 @@ class ContactController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Check create permission
+        if ($denied = $this->authorizeAccess('create')) {
+            return $denied;
+        }
+
         $contact = new Contact();
         $rules = $contact->getAllValidationRules();
         
@@ -135,6 +149,14 @@ class ContactController extends Controller
      */
     public function show(Request $request, Contact $contact): JsonResponse
     {
+        // Check read permission and record-level access
+        if ($denied = $this->authorizeAccess('read')) {
+            return $denied;
+        }
+        if ($denied = $this->authorizeRecordAccess($contact, 'read')) {
+            return $denied;
+        }
+
         // Default includes - always include children for related contacts display
         $defaultIncludes = ['categories', 'industry', 'countryRelation', 'stateRelation', 'title', 'parent', 'addresses', 'bankAccounts', 'children'];
         
@@ -160,6 +182,14 @@ class ContactController extends Controller
      */
     public function update(Request $request, Contact $contact): JsonResponse
     {
+        // Check write permission and record-level access
+        if ($denied = $this->authorizeAccess('write')) {
+            return $denied;
+        }
+        if ($denied = $this->authorizeRecordAccess($contact, 'write')) {
+            return $denied;
+        }
+
         $rules = $contact->getAllValidationRules();
         
         // Make rules for update (allow partial updates)
@@ -200,6 +230,14 @@ class ContactController extends Controller
      */
     public function destroy(Contact $contact): JsonResponse
     {
+        // Check delete permission and record-level access
+        if ($denied = $this->authorizeAccess('unlink')) {
+            return $denied;
+        }
+        if ($denied = $this->authorizeRecordAccess($contact, 'unlink')) {
+            return $denied;
+        }
+
         $contact->delete();
 
         return response()->json([

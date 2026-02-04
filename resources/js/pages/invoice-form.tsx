@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import AppLayout from '@/layouts/app-layout';
+import { DashboardLayout, DashboardHeader } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -384,38 +384,32 @@ export default function InvoiceFormPage() {
 
     if (loading) {
         return (
-            <AppLayout>
+            <DashboardLayout>
                 <div className="flex h-96 items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-            </AppLayout>
+            </DashboardLayout>
         );
     }
 
     return (
-        <AppLayout>
-            <form onSubmit={handleSubmit} className="space-y-6 p-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button type="button" variant="ghost" size="icon" onClick={() => navigate('/invoices')}>
-                            <ArrowLeft className="h-5 w-5" />
-                        </Button>
-                        <h1 className="text-2xl font-bold">
-                            {isEdit ? 'Edit Invoice' : 'New Invoice'}
-                        </h1>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button type="button" variant="outline" onClick={() => navigate('/invoices')}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={saving}>
-                            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            <Save className="mr-2 h-4 w-4" />
-                            Save
-                        </Button>
-                    </div>
+        <DashboardLayout>
+            <DashboardHeader
+                title={isEdit ? 'Edit Invoice' : 'New Invoice'}
+                backLink="/invoices"
+            >
+                <div className="flex gap-2">
+                    <Button type="button" variant="outline" onClick={() => navigate('/invoices')}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" form="invoice-form" disabled={saving}>
+                        {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Save className="mr-2 h-4 w-4" />
+                        Save
+                    </Button>
                 </div>
+            </DashboardHeader>
+            <form id="invoice-form" onSubmit={handleSubmit} className="space-y-6 p-6">
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* Main Form */}
@@ -661,14 +655,14 @@ export default function InvoiceFormPage() {
                                                         </TableCell>
                                                         <TableCell>
                                                             <Select
-                                                                value={line.tax_ids[0]?.toString() || ''}
-                                                                onValueChange={(value) => handleLineChange(line.tempId, 'tax_ids', value ? [parseInt(value)] : [])}
+                                                                value={line.tax_ids[0]?.toString() || 'none'}
+                                                                onValueChange={(value) => handleLineChange(line.tempId, 'tax_ids', value && value !== 'none' ? [parseInt(value)] : [])}
                                                             >
                                                                 <SelectTrigger className="h-8">
                                                                     <SelectValue placeholder="No tax" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
-                                                                    <SelectItem value="">No tax</SelectItem>
+                                                                    <SelectItem value="none">No tax</SelectItem>
                                                                     {taxes.filter(t => t.type === 'percent').map((tax) => (
                                                                         <SelectItem key={tax.id} value={tax.id.toString()}>
                                                                             {tax.name} ({tax.amount}%)
@@ -811,6 +805,6 @@ export default function InvoiceFormPage() {
                     </div>
                 </div>
             </form>
-        </AppLayout>
+        </DashboardLayout>
     );
 }

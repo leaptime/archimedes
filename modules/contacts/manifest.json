@@ -25,11 +25,26 @@
   
   "migrations": "database/migrations",
   
+  "models": {
+    "Contact": {
+      "class": "Modules\\Contacts\\Models\\Contact",
+      "table": "contacts",
+      "extends": "ExtendableModel"
+    }
+  },
+  
   "frontend": {
-    "entry": "frontend/index.ts",
     "pages": {
-      "/contacts": "frontend/pages/ContactsPage.tsx",
-      "/contacts/:id": "frontend/pages/ContactDetailPage.tsx"
+      "/contacts": "pages/contacts.tsx",
+      "/contacts/:id": "pages/contact-detail.tsx"
+    },
+    "extensionPoints": {
+      "contacts.list.after-stats": { "type": "widgets", "description": "Additional stats/widgets below main stats" },
+      "contacts.list.filter-actions": { "type": "actions", "description": "Additional filter buttons" },
+      "contacts.form.additional-fields": { "type": "form-field", "description": "Additional form fields" },
+      "contacts.detail.tabs": { "type": "tabs", "description": "Additional tabs in detail view" },
+      "contacts.detail.tab-content": { "type": "tab-content", "description": "Tab content for custom tabs" },
+      "contacts.detail.below-tabs": { "type": "sidebar", "description": "Full-width sections below tabs" }
     },
     "navigation": {
       "main": [

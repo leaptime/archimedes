@@ -8,7 +8,9 @@ Route::middleware(['web', 'auth:sanctum'])->prefix('api')->group(function () {
     // Module routes
     Route::get('/modules', [ModuleController::class, 'index']);
     Route::get('/modules/stats', [ModuleController::class, 'stats']);
+    Route::get('/modules/compliance', [ModuleController::class, 'compliance']);
     Route::get('/modules/{module}', [ModuleController::class, 'show']);
+    Route::get('/modules/{module}/compliance', [ModuleController::class, 'moduleCompliance']);
 
     // Permission routes
     Route::prefix('permissions')->group(function () {

@@ -1,46 +1,37 @@
-import { Link } from '@inertiajs/react';
+import { Link } from 'react-router-dom';
 import type { PropsWithChildren } from 'react';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
-import { edit as editAppearance } from '@/routes/appearance';
-import { edit } from '@/routes/profile';
-import { show } from '@/routes/two-factor';
-import { edit as editPassword } from '@/routes/user-password';
 import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
-        href: edit(),
+        href: '/settings/profile',
         icon: null,
     },
     {
         title: 'Password',
-        href: editPassword(),
+        href: '/settings/password',
         icon: null,
     },
     {
         title: 'Two-Factor Auth',
-        href: show(),
+        href: '/settings/two-factor',
         icon: null,
     },
     {
         title: 'Appearance',
-        href: editAppearance(),
+        href: '/settings/appearance',
         icon: null,
     },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentUrl } = useCurrentUrl();
-
-    // When server-side rendering, we only render the layout on the client...
-    if (typeof window === 'undefined') {
-        return null;
-    }
 
     return (
         <div className="px-4 py-6">
@@ -65,7 +56,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                     'bg-muted': isCurrentUrl(item.href),
                                 })}
                             >
-                                <Link href={item.href}>
+                                <Link to={item.href}>
                                     {item.icon && (
                                         <item.icon className="h-4 w-4" />
                                     )}

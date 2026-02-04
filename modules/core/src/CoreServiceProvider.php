@@ -5,11 +5,13 @@ namespace Modules\Core;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
 use Modules\Core\Services\ModuleRegistry;
+use Modules\Core\Services\ModuleValidator;
 use Modules\Core\Services\FieldRegistry;
 use Modules\Core\Services\ExtensionManager;
 use Modules\Core\Services\PermissionService;
 use Modules\Core\Services\PermissionLoader;
 use Modules\Core\Contracts\ModelExtension;
+use Modules\Core\Console\ModuleValidateCommand;
 
 class CoreServiceProvider extends ServiceProvider
 {
@@ -19,7 +21,18 @@ class CoreServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Register singletons
-        $this->app->singleton(ModuleRegistry::class);
+        $this->app->singleton(ModuleValidator::class, function ($app) {
+            $strictMode = config('modules.strict_validation', false);
+            return new ModuleValidator($strictMode);
+        });
+        
+        $this->app->singleton(ModuleRegistry::class, function ($app) {
+            $strictMode = config('modules.strict_validation', false);
+            $registry = new ModuleRegistry($strictMode);
+            $registry->setValidator($app->make(ModuleValidator::class));
+            return $registry;
+        });
+        
         $this->app->singleton(FieldRegistry::class);
         $this->app->singleton(ExtensionManager::class, function ($app) {
             return new ExtensionManager($app->make(FieldRegistry::class));
@@ -28,6 +41,13 @@ class CoreServiceProvider extends ServiceProvider
         $this->app->singleton(PermissionLoader::class, function ($app) {
             return new PermissionLoader($app->make(ModuleRegistry::class));
         });
+
+        // Register commands
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                ModuleValidateCommand::class,
+            ]);
+        }
 
         // Discover modules
         $this->app->make(ModuleRegistry::class)->discover();

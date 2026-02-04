@@ -52,6 +52,7 @@ import {
     Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ExtensionPoint, FormExtensionSlot } from '@/components/modules';
 
 // Types
 interface Contact {
@@ -575,6 +576,14 @@ function ContactFormDialog({
                         />
                     </div>
 
+                    {/* Extension point for additional form fields from other modules */}
+                    <FormExtensionSlot
+                        name="contacts.form.additional-fields"
+                        data={formData}
+                        setData={setFormData}
+                        className="mt-4 space-y-4"
+                    />
+
                     <DialogFooter className="mt-6">
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                             Cancel
@@ -803,6 +812,13 @@ export default function Contacts() {
                     </motion.div>
                 </div>
 
+                {/* Extension point for additional stats/widgets */}
+                <ExtensionPoint 
+                    name="contacts.list.after-stats" 
+                    context={{ stats, contacts: contactsData?.data }}
+                    className="mb-6"
+                />
+
                 {/* Filters */}
                 <div className="flex flex-wrap items-center gap-3 mb-6">
                     <div className="relative flex-1 max-w-md">
@@ -886,6 +902,12 @@ export default function Contacts() {
                         <Plus className="w-4 h-4 mr-2" />
                         New Contact
                     </Button>
+
+                    {/* Extension point for additional filter buttons */}
+                    <ExtensionPoint 
+                        name="contacts.list.filter-actions" 
+                        context={{ typeFilter, advancedFilters, setAdvancedFilters }}
+                    />
                 </div>
 
                 {/* Advanced Filters Panel */}
@@ -914,14 +936,14 @@ export default function Contacts() {
                             <div className="space-y-2">
                                 <Label className="text-xs text-muted-foreground">Country</Label>
                                 <Select
-                                    value={advancedFilters.country_id?.toString() || ''}
-                                    onValueChange={(v) => setAdvancedFilters({ ...advancedFilters, country_id: v ? parseInt(v) : undefined })}
+                                    value={advancedFilters.country_id?.toString() || 'any'}
+                                    onValueChange={(v) => setAdvancedFilters({ ...advancedFilters, country_id: v && v !== 'any' ? parseInt(v) : undefined })}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Any country" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Any country</SelectItem>
+                                        <SelectItem value="any">Any country</SelectItem>
                                         {options?.countries.map((country) => (
                                             <SelectItem key={country.id} value={country.id.toString()}>
                                                 {country.name}
@@ -933,14 +955,14 @@ export default function Contacts() {
                             <div className="space-y-2">
                                 <Label className="text-xs text-muted-foreground">Industry</Label>
                                 <Select
-                                    value={advancedFilters.industry_id?.toString() || ''}
-                                    onValueChange={(v) => setAdvancedFilters({ ...advancedFilters, industry_id: v ? parseInt(v) : undefined })}
+                                    value={advancedFilters.industry_id?.toString() || 'any'}
+                                    onValueChange={(v) => setAdvancedFilters({ ...advancedFilters, industry_id: v && v !== 'any' ? parseInt(v) : undefined })}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Any industry" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Any industry</SelectItem>
+                                        <SelectItem value="any">Any industry</SelectItem>
                                         {options?.industries.map((ind) => (
                                             <SelectItem key={ind.id} value={ind.id.toString()}>
                                                 {ind.name}
@@ -952,14 +974,14 @@ export default function Contacts() {
                             <div className="space-y-2">
                                 <Label className="text-xs text-muted-foreground">Category</Label>
                                 <Select
-                                    value={advancedFilters.category_id?.toString() || ''}
-                                    onValueChange={(v) => setAdvancedFilters({ ...advancedFilters, category_id: v ? parseInt(v) : undefined })}
+                                    value={advancedFilters.category_id?.toString() || 'any'}
+                                    onValueChange={(v) => setAdvancedFilters({ ...advancedFilters, category_id: v && v !== 'any' ? parseInt(v) : undefined })}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Any category" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Any category</SelectItem>
+                                        <SelectItem value="any">Any category</SelectItem>
                                         {options?.categories.map((cat) => (
                                             <SelectItem key={cat.id} value={cat.id.toString()}>
                                                 <span className="flex items-center gap-2">

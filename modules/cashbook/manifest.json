@@ -1,0 +1,119 @@
+{
+  "name": "cashbook",
+  "version": "1.0.0",
+  "displayName": "Cash Book",
+  "description": "Payment tracking and invoice allocation (Prima Nota)",
+  "category": "Finance",
+  "author": "Archimedes",
+  "license": "MIT",
+  
+  "depends": ["core", "contacts", "invoicing", "banking"],
+  
+  "autoload": {
+    "psr-4": {
+      "Modules\\CashBook\\": "src/"
+    }
+  },
+  
+  "providers": [
+    "Modules\\CashBook\\CashBookServiceProvider"
+  ],
+  
+  "extends": {},
+  
+  "routes": {
+    "api": "routes/api.php"
+  },
+  
+  "migrations": "database/migrations",
+  
+  "models": {
+    "CashBookEntry": {
+      "class": "Modules\\CashBook\\Models\\CashBookEntry",
+      "table": "cashbook_entries",
+      "extends": "ExtendableModel"
+    }
+  },
+  
+  "frontend": {
+    "pages": {
+      "/cashbook": "pages/cashbook.tsx",
+      "/cashbook/new": "pages/cashbook-form.tsx",
+      "/cashbook/:id": "pages/cashbook-detail.tsx",
+      "/cashbook/:id/edit": "pages/cashbook-form.tsx"
+    },
+    "extensionPoints": {
+      "cashbook.list.filters": { "type": "filters" },
+      "cashbook.list.columns": { "type": "columns" },
+      "cashbook.form.after-amount": { "type": "form-field" },
+      "cashbook.form.sidebar": { "type": "sidebar" },
+      "cashbook.detail.header": { "type": "header" },
+      "cashbook.detail.allocations": { "type": "section" },
+      "cashbook.detail.sidebar": { "type": "sidebar" }
+    },
+    "navigation": {
+      "main": [
+        {
+          "label": "Cash Book",
+          "icon": "BookOpen",
+          "path": "/cashbook",
+          "permission": "cashbook.view"
+        }
+      ]
+    }
+  },
+  
+  "permissions": {
+    "groups": [
+      {
+        "id": "cashbook.group_readonly",
+        "name": "Cash Book Readonly",
+        "description": "Can view cash book entries",
+        "implied": ["base.group_user"]
+      },
+      {
+        "id": "cashbook.group_user",
+        "name": "Cash Book User",
+        "description": "Can create and manage cash book entries",
+        "implied": ["cashbook.group_readonly", "invoicing.group_user"]
+      },
+      {
+        "id": "cashbook.group_manager",
+        "name": "Cash Book Manager",
+        "description": "Full access to cash book including reconciliation",
+        "implied": ["cashbook.group_user", "invoicing.group_manager"]
+      }
+    ],
+    "access": {
+      "cashbook.entry": {
+        "cashbook.group_readonly": [true, false, false, false],
+        "cashbook.group_user": [true, true, true, false],
+        "cashbook.group_manager": [true, true, true, true]
+      },
+      "cashbook.allocation": {
+        "cashbook.group_readonly": [true, false, false, false],
+        "cashbook.group_user": [true, true, true, true],
+        "cashbook.group_manager": [true, true, true, true]
+      }
+    }
+  },
+  
+  "settings": {
+    "default_payment_method": {
+      "type": "string",
+      "default": "bank_transfer",
+      "label": "Default Payment Method",
+      "options": ["cash", "bank_transfer", "check", "credit_card", "direct_debit"]
+    },
+    "auto_confirm": {
+      "type": "boolean",
+      "default": false,
+      "label": "Auto-confirm entries created from invoices"
+    },
+    "number_prefix": {
+      "type": "string",
+      "default": "CB",
+      "label": "Entry Number Prefix"
+    }
+  }
+}

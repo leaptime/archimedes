@@ -1,0 +1,126 @@
+{
+  "name": "crm",
+  "version": "1.0.0",
+  "displayName": "CRM",
+  "description": "Lead and opportunity management with sales pipeline",
+  "category": "Sales",
+  "author": "Archimedes",
+  "license": "MIT",
+  
+  "depends": ["core", "contacts"],
+  
+  "autoload": {
+    "psr-4": {
+      "Modules\\Crm\\": "src/"
+    }
+  },
+  
+  "providers": [
+    "Modules\\Crm\\CrmServiceProvider"
+  ],
+  
+  "routes": {
+    "api": "routes/api.php"
+  },
+  
+  "migrations": "database/migrations",
+  
+  "models": {
+    "Lead": {
+      "class": "Modules\\Crm\\Models\\Lead",
+      "table": "crm_leads",
+      "extends": "ExtendableModel"
+    },
+    "Stage": {
+      "class": "Modules\\Crm\\Models\\Stage",
+      "table": "crm_stages",
+      "extends": "ExtendableModel"
+    },
+    "Team": {
+      "class": "Modules\\Crm\\Models\\Team",
+      "table": "crm_teams",
+      "extends": "ExtendableModel"
+    },
+    "Activity": {
+      "class": "Modules\\Crm\\Models\\Activity",
+      "table": "crm_activities",
+      "extends": "ExtendableModel"
+    }
+  },
+  
+  "frontend": {
+    "pages": {
+      "/crm": "pages/crm-pipeline.tsx",
+      "/crm/leads": "pages/crm-leads.tsx",
+      "/crm/leads/new": "pages/crm-lead-form.tsx",
+      "/crm/leads/:id": "pages/crm-lead-detail.tsx",
+      "/crm/leads/:id/edit": "pages/crm-lead-form.tsx"
+    },
+    "extensionPoints": {
+      "crm.pipeline.after-stats": { "type": "widgets", "description": "Additional stats/widgets in pipeline view" },
+      "crm.pipeline.actions": { "type": "actions", "description": "Additional pipeline actions" },
+      "crm.list.filters": { "type": "filters", "description": "Additional list filters" },
+      "crm.list.bulk-actions": { "type": "actions", "description": "Bulk actions for selected items" },
+      "crm.list.below": { "type": "content", "description": "Content below the list" },
+      "crm.lead.detail.sidebar": { "type": "sidebar", "description": "Additional sidebar panels" },
+      "crm.lead.detail.below": { "type": "content", "description": "Full-width content below main layout" }
+    },
+    "navigation": {
+      "main": [
+        {
+          "label": "CRM",
+          "icon": "Target",
+          "path": "/crm",
+          "permission": "crm.view"
+        }
+      ]
+    }
+  },
+  
+  "permissions": {
+    "groups": [
+      {
+        "id": "crm.group_readonly",
+        "name": "CRM Readonly",
+        "description": "Can view leads and opportunities",
+        "implied": ["base.group_user"]
+      },
+      {
+        "id": "crm.group_user",
+        "name": "CRM User",
+        "description": "Can create and manage own leads",
+        "implied": ["crm.group_readonly", "contacts.group_user"]
+      },
+      {
+        "id": "crm.group_manager",
+        "name": "CRM Manager",
+        "description": "Full access to CRM including team management",
+        "implied": ["crm.group_user"]
+      }
+    ],
+    "access": {
+      "crm.lead": {
+        "crm.group_readonly": [true, false, false, false],
+        "crm.group_user": [true, true, true, false],
+        "crm.group_manager": [true, true, true, true]
+      },
+      "crm.team": {
+        "crm.group_readonly": [true, false, false, false],
+        "crm.group_manager": [true, true, true, true]
+      }
+    }
+  },
+  
+  "settings": {
+    "use_leads": {
+      "type": "boolean",
+      "default": true,
+      "label": "Use Lead Qualification"
+    },
+    "default_probability": {
+      "type": "integer",
+      "default": 10,
+      "label": "Default Win Probability (%)"
+    }
+  }
+}

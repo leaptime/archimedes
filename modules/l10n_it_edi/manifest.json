@@ -1,0 +1,97 @@
+{
+  "name": "l10n_it_edi",
+  "version": "1.0.0",
+  "displayName": "Italian E-Invoicing",
+  "description": "FatturaPA XML generation and SDI integration for Italian electronic invoicing",
+  "category": "Localization",
+  "author": "Archimedes",
+  "license": "MIT",
+  
+  "depends": ["core", "contacts", "invoicing"],
+  
+  "autoload": {
+    "psr-4": {
+      "Modules\\L10nItEdi\\": "src/"
+    }
+  },
+  
+  "providers": [
+    "Modules\\L10nItEdi\\L10nItEdiServiceProvider"
+  ],
+  
+  "extends": {
+    "invoicing.invoice": {
+      "fields": "src/Extensions/InvoiceExtension.php"
+    },
+    "contacts.contact": {
+      "fields": "src/Extensions/ContactExtension.php"
+    }
+  },
+  
+  "routes": {
+    "api": "routes/api.php"
+  },
+  
+  "migrations": "database/migrations",
+  
+  "models": {},
+  
+  "frontend": {
+    "components": {
+      "FatturaPaPanel": "frontend/components/FatturaPaPanel.tsx"
+    },
+    "extensionPoints": {
+      "l10n_it_edi.invoice.panel": { "type": "panel" },
+      "l10n_it_edi.invoice.actions": { "type": "actions" }
+    },
+    "extensions": {
+      "invoices.detail.tabs": "frontend/components/FatturaPaPanel.tsx"
+    },
+    "navigation": {
+      "main": []
+    }
+  },
+  
+  "permissions": {
+    "groups": [
+      {
+        "id": "l10n_it_edi.group_user",
+        "name": "Italian EDI User",
+        "description": "Can send invoices via SDI",
+        "implied": ["invoicing.group_user"]
+      },
+      {
+        "id": "l10n_it_edi.group_manager",
+        "name": "Italian EDI Manager",
+        "description": "Full access to Italian e-invoicing settings",
+        "implied": ["l10n_it_edi.group_user", "invoicing.group_manager"]
+      }
+    ]
+  },
+  
+  "settings": {
+    "aruba_username": {
+      "type": "string",
+      "default": "",
+      "label": "Aruba Username",
+      "secret": true
+    },
+    "aruba_password": {
+      "type": "string",
+      "default": "",
+      "label": "Aruba Password",
+      "secret": true
+    },
+    "regime_fiscale": {
+      "type": "string",
+      "default": "RF01",
+      "label": "Regime Fiscale",
+      "options": ["RF01", "RF02", "RF04", "RF05", "RF06", "RF07", "RF08", "RF09", "RF10", "RF11", "RF12", "RF13", "RF14", "RF15", "RF16", "RF17", "RF18", "RF19"]
+    },
+    "default_natura": {
+      "type": "string",
+      "default": "",
+      "label": "Default Natura (for 0% VAT)"
+    }
+  }
+}

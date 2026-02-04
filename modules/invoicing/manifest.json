@@ -1,0 +1,126 @@
+{
+  "name": "invoicing",
+  "version": "1.0.0",
+  "displayName": "Invoicing",
+  "description": "Invoice management with payment tracking",
+  "category": "Finance",
+  "author": "Archimedes",
+  "license": "MIT",
+  
+  "depends": ["core", "contacts"],
+  
+  "autoload": {
+    "psr-4": {
+      "Modules\\Invoicing\\": "src/"
+    }
+  },
+  
+  "providers": [
+    "Modules\\Invoicing\\InvoicingServiceProvider"
+  ],
+  
+  "extends": {
+    "contacts.contact": {
+      "fields": "src/Extensions/ContactExtension.php",
+      "frontend": "frontend/extensions/ContactFormExtension.tsx"
+    }
+  },
+  
+  "routes": {
+    "api": "src/routes/api.php"
+  },
+  
+  "migrations": "database/migrations",
+  
+  "frontend": {
+    "entry": "frontend/index.ts",
+    "pages": {
+      "/invoices": "frontend/pages/InvoicesPage.tsx",
+      "/invoices/:id": "frontend/pages/InvoiceDetailPage.tsx"
+    },
+    "navigation": {
+      "main": [
+        {
+          "label": "Invoices",
+          "icon": "FileText",
+          "path": "/invoices",
+          "permission": "invoicing.view"
+        }
+      ]
+    }
+  },
+  
+  "permissions": {
+    "groups": [
+      {
+        "id": "invoicing.group_readonly",
+        "name": "Invoicing Readonly",
+        "description": "Can view invoices and reports",
+        "implied": ["base.group_user"]
+      },
+      {
+        "id": "invoicing.group_user",
+        "name": "Invoicing User",
+        "description": "Can create and edit invoices",
+        "implied": ["invoicing.group_readonly"]
+      },
+      {
+        "id": "invoicing.group_manager",
+        "name": "Invoicing Manager",
+        "description": "Full access to invoicing including settings",
+        "implied": ["invoicing.group_user", "contacts.group_manager"]
+      }
+    ],
+    "access": {
+      "invoicing.invoice": {
+        "invoicing.group_readonly": [true, false, false, false],
+        "invoicing.group_user": [true, true, true, false],
+        "invoicing.group_manager": [true, true, true, true]
+      },
+      "invoicing.payment": {
+        "invoicing.group_readonly": [true, false, false, false],
+        "invoicing.group_user": [true, true, true, false],
+        "invoicing.group_manager": [true, true, true, true]
+      },
+      "invoicing.payment_term": {
+        "base.group_user": [true, false, false, false],
+        "invoicing.group_manager": [true, true, true, true]
+      }
+    },
+    "rules": [
+      {
+        "id": "rule_invoice_company",
+        "name": "Invoices by company",
+        "model": "invoicing.invoice",
+        "domain": "user.company_ids.includes(record.company_id)",
+        "global": true
+      },
+      {
+        "id": "rule_invoice_readonly_all",
+        "name": "Readonly users see all invoices",
+        "model": "invoicing.invoice",
+        "domain": "true",
+        "groups": ["invoicing.group_readonly"],
+        "operations": ["read"]
+      }
+    ]
+  },
+  
+  "settings": {
+    "invoice_prefix": {
+      "type": "string",
+      "default": "INV-",
+      "label": "Invoice Number Prefix"
+    },
+    "default_due_days": {
+      "type": "integer",
+      "default": 30,
+      "label": "Default Due Days"
+    },
+    "default_tax_rate": {
+      "type": "decimal",
+      "default": 0,
+      "label": "Default Tax Rate (%)"
+    }
+  }
+}

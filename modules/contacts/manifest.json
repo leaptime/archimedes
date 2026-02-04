@@ -1,0 +1,86 @@
+{
+  "name": "contacts",
+  "version": "1.0.0",
+  "displayName": "Contacts",
+  "description": "Contact management module",
+  "category": "CRM",
+  "author": "Archimedes",
+  "license": "MIT",
+  
+  "depends": ["core"],
+  
+  "autoload": {
+    "psr-4": {
+      "Modules\\Contacts\\": "src/"
+    }
+  },
+  
+  "providers": [
+    "Modules\\Contacts\\ContactsServiceProvider"
+  ],
+  
+  "routes": {
+    "api": "src/routes/api.php"
+  },
+  
+  "migrations": "database/migrations",
+  
+  "frontend": {
+    "entry": "frontend/index.ts",
+    "pages": {
+      "/contacts": "frontend/pages/ContactsPage.tsx",
+      "/contacts/:id": "frontend/pages/ContactDetailPage.tsx"
+    },
+    "navigation": {
+      "main": [
+        {
+          "label": "Contacts",
+          "icon": "Users",
+          "path": "/contacts",
+          "permission": "contacts.view"
+        }
+      ]
+    }
+  },
+  
+  "permissions": {
+    "groups": [
+      {
+        "id": "contacts.group_user",
+        "name": "Contact User",
+        "description": "Can view and edit contacts",
+        "implied": ["base.group_user"]
+      },
+      {
+        "id": "contacts.group_manager",
+        "name": "Contact Manager",
+        "description": "Full access to contacts including delete",
+        "implied": ["contacts.group_user"]
+      }
+    ],
+    "access": {
+      "contacts.contact": {
+        "base.group_user": [true, false, false, false],
+        "contacts.group_user": [true, true, true, false],
+        "contacts.group_manager": [true, true, true, true]
+      }
+    },
+    "rules": [
+      {
+        "id": "rule_contact_own_user",
+        "name": "Users see own contacts",
+        "model": "contacts.contact",
+        "domain": [["user_id", "=", "user.id"], "|", ["is_public", "=", true]],
+        "groups": ["contacts.group_user"],
+        "operations": ["read", "write"]
+      },
+      {
+        "id": "rule_contact_all_manager",
+        "name": "Managers see all contacts",
+        "model": "contacts.contact",
+        "domain": "true",
+        "groups": ["contacts.group_manager"]
+      }
+    ]
+  }
+}

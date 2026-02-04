@@ -1,0 +1,114 @@
+{
+  "module": "contacts",
+  "tests": {
+    "e2e": {
+      "files": ["contacts.spec.ts"],
+      "totalTests": 37,
+      "suites": [
+        {
+          "name": "Contacts List Page",
+          "tests": [
+            "should display contacts page with stats",
+            "should have search input",
+            "should have filter buttons",
+            "should have view mode toggle",
+            "should have new contact button",
+            "should filter by company type",
+            "should filter by individual type",
+            "should search contacts"
+          ]
+        },
+        {
+          "name": "Create Contact",
+          "tests": [
+            "should open create dialog",
+            "should have form tabs",
+            "should toggle company mode",
+            "should create individual contact",
+            "should create company contact",
+            "should validate required fields",
+            "should close dialog on cancel"
+          ]
+        },
+        {
+          "name": "Edit Contact",
+          "tests": [
+            "should open edit dialog from card",
+            "should populate form with existing data",
+            "should update contact"
+          ]
+        },
+        {
+          "name": "Delete Contact",
+          "tests": [
+            "should show delete confirmation"
+          ]
+        },
+        {
+          "name": "Contact Card Display",
+          "tests": [
+            "should display contact names",
+            "should show email with mailto link",
+            "should show phone with tel link"
+          ]
+        },
+        {
+          "name": "View Modes",
+          "tests": [
+            "should switch to list view",
+            "should switch back to grid view"
+          ]
+        },
+        {
+          "name": "API Integration",
+          "tests": [
+            "should load contacts from API",
+            "should load options from API",
+            "should have stats displayed"
+          ]
+        },
+        {
+          "name": "Refresh",
+          "tests": [
+            "should refresh contacts list"
+          ]
+        },
+        {
+          "name": "Contacts Form Validation",
+          "tests": [
+            "should validate email format",
+            "should create contact with only required fields"
+          ]
+        },
+        {
+          "name": "Contacts Address Tab",
+          "tests": [
+            "should switch to address tab",
+            "should have country dropdown"
+          ]
+        },
+        {
+          "name": "Contacts Classification Tab",
+          "tests": [
+            "should switch to classification tab",
+            "should toggle customer flag",
+            "should toggle vendor flag",
+            "should have industry dropdown"
+          ]
+        }
+      ]
+    }
+  },
+  "coverage": {
+    "pages": ["/contacts"],
+    "features": [
+      "contact list display",
+      "search and filtering",
+      "view mode toggle",
+      "CRUD operations",
+      "form validation",
+      "form tabs navigation",
+      "API integration"
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+{
+    "name": "Banking",
+    "version": "1.0.0",
+    "description": "Bank account management, transaction import, and reconciliation",
+    "author": "Archimedes",
+    "category": "Accounting",
+    "depends": ["core", "contacts"],
+    "autoload": {
+        "psr-4": {
+            "Modules\\Banking\\": "src/"
+        }
+    },
+    "providers": [
+        "Modules\\Banking\\BankingServiceProvider"
+    ],
+    "migrations": "database/migrations",
+    "routes": "src/routes.php",
+    "frontend": {
+        "components": "frontend/components",
+        "pages": [
+            {
+                "name": "Banking Dashboard",
+                "path": "/banking",
+                "component": "banking-dashboard"
+            },
+            {
+                "name": "Bank Accounts",
+                "path": "/banking/accounts",
+                "component": "bank-accounts"
+            },
+            {
+                "name": "Transactions",
+                "path": "/banking/transactions",
+                "component": "transactions"
+            },
+            {
+                "name": "Statements",
+                "path": "/banking/statements",
+                "component": "statements"
+            },
+            {
+                "name": "Import",
+                "path": "/banking/import",
+                "component": "import"
+            },
+            {
+                "name": "Reconciliation",
+                "path": "/banking/reconciliation",
+                "component": "reconciliation"
+            }
+        ]
+    },
+    "permissions": [
+        "banking.view",
+        "banking.create",
+        "banking.edit",
+        "banking.delete",
+        "banking.import",
+        "banking.reconcile"
+    ],
+    "icon": "landmark",
+    "color": "#10B981"
+}

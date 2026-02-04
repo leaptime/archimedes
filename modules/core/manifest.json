@@ -1,0 +1,29 @@
+{
+  "name": "core",
+  "version": "1.0.0",
+  "displayName": "Core",
+  "description": "Core extensibility framework for Archimedes modules",
+  "category": "System",
+  "author": "Archimedes",
+  "license": "MIT",
+  
+  "depends": [],
+  
+  "autoload": {
+    "psr-4": {
+      "Modules\\Core\\": "src/"
+    }
+  },
+  
+  "providers": [
+    "Modules\\Core\\CoreServiceProvider"
+  ],
+  
+  "routes": {
+    "api": "src/routes/api.php"
+  },
+  
+  "frontend": {
+    "entry": "frontend/index.ts"
+  }
+}

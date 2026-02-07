@@ -467,7 +467,7 @@ export default function CrmLeadForm() {
                                                 <SelectValue placeholder="Select stage..." />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {stages.map((stage) => (
+                                                {stages.filter(s => s.id).map((stage) => (
                                                     <SelectItem key={stage.id} value={stage.id.toString()}>
                                                         {stage.name}
                                                     </SelectItem>
@@ -483,7 +483,7 @@ export default function CrmLeadForm() {
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="none">No team</SelectItem>
-                                                {teams.map((team) => (
+                                                {teams.filter(t => t.id).map((team) => (
                                                     <SelectItem key={team.id} value={team.id.toString()}>
                                                         {team.name}
                                                     </SelectItem>

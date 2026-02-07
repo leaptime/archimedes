@@ -58,6 +58,36 @@ async function fetchModuleDetail(moduleId: string): Promise<ModuleDetail> {
     return response.data.data;
 }
 
+export interface ModulePlugin {
+    id: string;
+    name: string;
+    version: string;
+    description: string;
+    author: string;
+    trustLevel: 'community' | 'verified' | 'certified' | 'core';
+    extends: string[];
+    capabilities: string[];
+    slots: Array<{
+        slot: string;
+        component: string;
+        priority: number;
+    }>;
+    fields: Array<{
+        model: string;
+        name: string;
+        label: string;
+        type: string;
+    }>;
+    isValid: boolean;
+    errors: Record<string, string>;
+    scope: 'global' | 'tenant';
+}
+
+async function fetchModulePlugins(moduleId: string): Promise<ModulePlugin[]> {
+    const response = await axios.get(`/api/modules/${moduleId}/plugins`);
+    return response.data.data;
+}
+
 export function useModules() {
     return useQuery({
         queryKey: ['modules'],
@@ -76,6 +106,14 @@ export function useModuleDetail(moduleId: string) {
     return useQuery({
         queryKey: ['modules', moduleId],
         queryFn: () => fetchModuleDetail(moduleId),
+        enabled: !!moduleId,
+    });
+}
+
+export function useModulePlugins(moduleId: string) {
+    return useQuery({
+        queryKey: ['modules', moduleId, 'plugins'],
+        queryFn: () => fetchModulePlugins(moduleId),
         enabled: !!moduleId,
     });
 }

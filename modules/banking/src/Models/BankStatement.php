@@ -11,6 +11,8 @@ class BankStatement extends ExtendableModel
 {
     use SoftDeletes;
 
+    public const MODEL_IDENTIFIER = 'banking.bankstatement';
+
     protected $fillable = [
         'name',
         'reference',

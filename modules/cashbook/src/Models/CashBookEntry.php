@@ -19,6 +19,8 @@ class CashBookEntry extends ExtendableModel
 
     protected $table = 'cashbook_entries';
 
+    public const MODEL_IDENTIFIER = 'cashbook.entry';
+
     protected $fillable = [
         'number',
         'date',

@@ -12,15 +12,23 @@ use Modules\Invoicing\Models\Tax;
 use Modules\Invoicing\Models\Currency;
 use Modules\Invoicing\Services\InvoicePdfService;
 use Modules\Invoicing\Services\InvoiceEmailService;
+use Modules\Core\Traits\HasModelPermissions;
 
 class InvoiceController extends Controller
 {
+    use HasModelPermissions;
+
+    protected ?string $modelIdentifier = 'invoicing.invoice';
     /**
      * Display a listing of invoices.
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Invoice::query();
+        if ($denied = $this->authorizeAccess('read')) {
+            return $denied;
+        }
+
+        $query = Invoice::query()->withRecordRules('read');
 
         // Filter by move type
         if ($moveType = $request->query('move_type')) {

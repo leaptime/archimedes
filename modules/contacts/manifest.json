@@ -34,18 +34,236 @@
   },
   
   "frontend": {
-    "pages": {
-      "/contacts": "pages/contacts.tsx",
-      "/contacts/:id": "pages/contact-detail.tsx"
-    },
-    "extensionPoints": {
-      "contacts.list.after-stats": { "type": "widgets", "description": "Additional stats/widgets below main stats" },
-      "contacts.list.filter-actions": { "type": "actions", "description": "Additional filter buttons" },
-      "contacts.form.additional-fields": { "type": "form-field", "description": "Additional form fields" },
-      "contacts.detail.tabs": { "type": "tabs", "description": "Additional tabs in detail view" },
-      "contacts.detail.tab-content": { "type": "tab-content", "description": "Tab content for custom tabs" },
-      "contacts.detail.below-tabs": { "type": "sidebar", "description": "Full-width sections below tabs" }
-    },
+    "pages": [
+      {
+        "id": "contacts-list",
+        "path": "/contacts",
+        "title": "Contacts",
+        "component": "pages/contacts.tsx",
+        "template": "list",
+        "layout": {
+          "regions": {
+            "header": {
+              "title": "Contacts",
+              "description": "Manage your contacts and companies",
+              "slots": []
+            },
+            "toolbar": {
+              "hasSearch": true,
+              "hasFilters": true,
+              "slots": ["contacts.list.filter-actions"]
+            },
+            "stats": {
+              "items": ["Total Contacts", "Companies", "Individuals", "New This Month"],
+              "slots": ["contacts.list.after-stats"]
+            },
+            "table": {
+              "columns": ["Name", "Email", "Phone", "Company", "Type", "Created"],
+              "slots": ["contacts.list.columns", "contacts.list.row-actions"]
+            },
+            "footer": {
+              "hasPagination": true,
+              "slots": []
+            }
+          }
+        }
+      },
+      {
+        "id": "contact-detail",
+        "path": "/contacts/:id",
+        "title": "Contact Detail",
+        "component": "pages/contact-detail.tsx",
+        "template": "detail",
+        "layout": {
+          "regions": {
+            "header": {
+              "title": "{{name}}",
+              "subtitle": "{{email}}",
+              "hasBackButton": true,
+              "slots": ["contacts.detail.header-actions"]
+            },
+            "main": {
+              "sections": [
+                {
+                  "id": "basic-info",
+                  "title": "Basic Information",
+                  "fields": ["name", "email", "phone", "mobile"],
+                  "slots": ["contacts.detail.after-basic-info"]
+                },
+                {
+                  "id": "company-info",
+                  "title": "Company",
+                  "fields": ["company", "job_title", "department"],
+                  "slots": ["contacts.detail.after-company"]
+                },
+                {
+                  "id": "address",
+                  "title": "Address",
+                  "fields": ["street", "city", "state", "zip", "country"],
+                  "slots": ["contacts.detail.after-address"]
+                }
+              ]
+            },
+            "sidebar": {
+              "slots": ["contacts.detail.sidebar"]
+            },
+            "tabs": {
+              "items": ["Overview", "Invoices", "History"],
+              "slots": ["contacts.detail.tabs"]
+            },
+            "tabContent": {
+              "slots": ["contacts.detail.tab-content"]
+            },
+            "belowTabs": {
+              "slots": ["contacts.detail.below-tabs"]
+            }
+          }
+        }
+      },
+      {
+        "id": "contact-form",
+        "path": "/contacts/new",
+        "title": "New Contact",
+        "component": "pages/contact-form.tsx",
+        "template": "form",
+        "layout": {
+          "regions": {
+            "header": {
+              "title": "New Contact",
+              "hasBackButton": true,
+              "slots": []
+            },
+            "form": {
+              "sections": [
+                {
+                  "id": "basic",
+                  "title": "Basic Information",
+                  "fields": ["type", "name", "email", "phone"],
+                  "slots": ["contacts.form.after-basic"]
+                },
+                {
+                  "id": "company",
+                  "title": "Company Details",
+                  "fields": ["company", "job_title"],
+                  "slots": ["contacts.form.after-company"]
+                },
+                {
+                  "id": "address",
+                  "title": "Address",
+                  "fields": ["street", "city", "state", "zip", "country"],
+                  "slots": ["contacts.form.after-address"]
+                },
+                {
+                  "id": "additional",
+                  "title": "Additional Information",
+                  "fields": ["notes", "tags"],
+                  "slots": ["contacts.form.additional-fields"]
+                }
+              ]
+            },
+            "sidebar": {
+              "slots": ["contacts.form.sidebar"]
+            },
+            "actions": {
+              "buttons": ["Cancel", "Save"],
+              "slots": ["contacts.form.actions"]
+            }
+          }
+        }
+      }
+    ],
+    "slots": [
+      {
+        "id": "contacts.list.filter-actions",
+        "description": "Additional filter/action buttons in list toolbar",
+        "region": "toolbar"
+      },
+      {
+        "id": "contacts.list.after-stats",
+        "description": "Widgets below the stats cards",
+        "region": "stats"
+      },
+      {
+        "id": "contacts.list.columns",
+        "description": "Additional table columns",
+        "region": "table"
+      },
+      {
+        "id": "contacts.list.row-actions",
+        "description": "Row action buttons",
+        "region": "table"
+      },
+      {
+        "id": "contacts.detail.header-actions",
+        "description": "Action buttons in detail header",
+        "region": "header"
+      },
+      {
+        "id": "contacts.detail.after-basic-info",
+        "description": "Content after basic info section",
+        "region": "main"
+      },
+      {
+        "id": "contacts.detail.after-company",
+        "description": "Content after company section",
+        "region": "main"
+      },
+      {
+        "id": "contacts.detail.after-address",
+        "description": "Content after address section",
+        "region": "main"
+      },
+      {
+        "id": "contacts.detail.sidebar",
+        "description": "Sidebar cards on detail page",
+        "region": "sidebar"
+      },
+      {
+        "id": "contacts.detail.tabs",
+        "description": "Additional tabs",
+        "region": "tabs"
+      },
+      {
+        "id": "contacts.detail.tab-content",
+        "description": "Content for custom tabs",
+        "region": "tabContent"
+      },
+      {
+        "id": "contacts.detail.below-tabs",
+        "description": "Full-width sections below tabs",
+        "region": "belowTabs"
+      },
+      {
+        "id": "contacts.form.after-basic",
+        "description": "Fields after basic info section",
+        "region": "form"
+      },
+      {
+        "id": "contacts.form.after-company",
+        "description": "Fields after company section",
+        "region": "form"
+      },
+      {
+        "id": "contacts.form.after-address",
+        "description": "Fields after address section",
+        "region": "form"
+      },
+      {
+        "id": "contacts.form.additional-fields",
+        "description": "Additional form fields section",
+        "region": "form"
+      },
+      {
+        "id": "contacts.form.sidebar",
+        "description": "Sidebar on form page",
+        "region": "sidebar"
+      },
+      {
+        "id": "contacts.form.actions",
+        "description": "Additional form action buttons",
+        "region": "actions"
+      }
+    ],
     "navigation": {
       "main": [
         {

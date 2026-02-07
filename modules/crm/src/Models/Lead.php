@@ -16,6 +16,8 @@ class Lead extends ExtendableModel
 
     protected $table = 'crm_leads';
 
+    public const MODEL_IDENTIFIER = 'crm.lead';
+
     const TYPE_LEAD = 'lead';
     const TYPE_OPPORTUNITY = 'opportunity';
 

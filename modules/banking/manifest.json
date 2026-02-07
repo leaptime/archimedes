@@ -76,17 +76,41 @@
       {
         "id": "banking.group_readonly",
         "name": "Banking Readonly",
-        "description": "Can view bank accounts and statements"
+        "description": "Can view bank accounts and statements",
+        "implied": ["base.group_user"]
       },
       {
         "id": "banking.group_user",
         "name": "Banking User",
-        "description": "Can manage statements and reconcile"
+        "description": "Can manage statements and reconcile",
+        "implied": ["banking.group_readonly"]
       },
       {
         "id": "banking.group_manager",
         "name": "Banking Manager",
-        "description": "Full banking access including connections"
+        "description": "Full banking access including connections",
+        "implied": ["banking.group_user"]
+      }
+    ],
+    "access": {
+      "banking.bankstatement": {
+        "banking.group_readonly": [true, false, false, false],
+        "banking.group_user": [true, true, true, false],
+        "banking.group_manager": [true, true, true, true]
+      },
+      "banking.bankaccount": {
+        "banking.group_readonly": [true, false, false, false],
+        "banking.group_user": [true, true, false, false],
+        "banking.group_manager": [true, true, true, true]
+      }
+    },
+    "rules": [
+      {
+        "id": "rule_banking_company",
+        "name": "Banking by company",
+        "model": "banking.bankstatement",
+        "domain": "user.company_ids.includes(record.company_id)",
+        "global": true
       }
     ]
   },

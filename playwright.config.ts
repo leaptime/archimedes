@@ -14,20 +14,20 @@ export default defineConfig({
     ],
     
     // Global timeout settings
-    timeout: 30000, // 30s max per test
+    timeout: 15000, // 15s max per test
     expect: {
-        timeout: 3000, // 3s for assertions (toast messages may take time)
+        timeout: 3000, // 3s for assertions
     },
     
     use: {
         baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:8000',
-        trace: 'on-first-retry',
-        screenshot: 'only-on-failure',
-        video: 'retain-on-failure',
+        trace: 'off',
+        screenshot: 'off',
+        video: 'off',
         
         // Action timeouts
-        actionTimeout: 5000, // 5s for clicks, fills, etc.
-        navigationTimeout: 10000, // 10s for page loads
+        actionTimeout: 3000, // 3s for clicks, fills, etc.
+        navigationTimeout: 5000, // 5s for page loads
     },
 
     projects: [
@@ -36,23 +36,26 @@ export default defineConfig({
             name: 'setup',
             testMatch: /.*\.setup\.ts/,
         },
+        // Default tests (platform admin user)
         {
             name: 'chromium',
             use: { 
                 ...devices['Desktop Chrome'],
                 storageState: 'playwright/.auth/user.json',
             },
+            testIgnore: ['**/partner-portal.spec.ts'],
             dependencies: ['setup'],
         },
-        // Firefox disabled - run `npx playwright install firefox` to enable
-        // {
-        //     name: 'firefox',
-        //     use: { 
-        //         ...devices['Desktop Firefox'],
-        //         storageState: 'playwright/.auth/user.json',
-        //     },
-        //     dependencies: ['setup'],
-        // },
+        // Partner portal tests (partner admin user)
+        {
+            name: 'chromium-partner',
+            use: { 
+                ...devices['Desktop Chrome'],
+                storageState: 'playwright/.auth/partner.json',
+            },
+            testMatch: ['**/partner-portal.spec.ts'],
+            dependencies: ['setup'],
+        },
     ],
 
     // Run local dev server before tests

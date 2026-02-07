@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Contacts\Controllers\ContactController;
 
-Route::middleware(['web', 'auth:sanctum'])->prefix('api')->group(function () {
+Route::middleware(['web', 'auth.session'])->prefix('api')->group(function () {
     // Contact metadata (no model access check - reference data)
     Route::get('/contacts/fields', [ContactController::class, 'fields']);
     Route::get('/contacts/options', [ContactController::class, 'options']);

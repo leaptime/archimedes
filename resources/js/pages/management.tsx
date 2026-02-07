@@ -2,6 +2,7 @@ import { DashboardLayout, DashboardHeader } from '@/components/layout';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
     Users, 
     Shield, 
@@ -12,7 +13,15 @@ import {
     Key,
     Globe,
     HardDrive,
-    Settings2
+    Settings2,
+    Boxes,
+    Store,
+    Wand2,
+    ArrowUpCircle,
+    Package,
+    LayoutGrid,
+    Building2,
+    Book,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -76,9 +85,53 @@ function ManagementCard({ title, description, icon, href, badge, stats, delay = 
 }
 
 export default function Management() {
-    const managementSections = [
+    // Modules section cards
+    const modulesSections = [
         {
-            title: 'Team',
+            title: 'My Modules',
+            description: 'View and manage all installed modules. Configure module settings and check compliance status.',
+            icon: <Boxes className="w-6 h-6 text-primary" />,
+            href: '/my-modules',
+            stats: [
+                { label: 'Installed', value: '7' },
+                { label: 'Active', value: '7' },
+            ],
+        },
+        {
+            title: 'Marketplace',
+            description: 'Browse and install new modules from the marketplace. Discover extensions to expand functionality.',
+            icon: <Store className="w-6 h-6 text-primary" />,
+            href: '/marketplace',
+            badge: 'New modules',
+            stats: [
+                { label: 'Available', value: '50+' },
+                { label: 'Categories', value: '8' },
+            ],
+        },
+        {
+            title: 'Module Wizard',
+            description: 'Create new modules with guided setup. Generate boilerplate code and configurations automatically.',
+            icon: <Wand2 className="w-6 h-6 text-primary" />,
+            href: '/wizard',
+            stats: [
+                { label: 'Templates', value: '5' },
+            ],
+        },
+        {
+            title: 'Upgrades',
+            description: 'Check for module updates and upgrade to newer versions. View changelog and breaking changes.',
+            icon: <ArrowUpCircle className="w-6 h-6 text-primary" />,
+            href: '/upgrades',
+            stats: [
+                { label: 'Updates', value: '2' },
+            ],
+        },
+    ];
+
+    // Team & Security section cards
+    const teamSections = [
+        {
+            title: 'Team Members',
             description: 'Manage team members, roles, and permissions. Invite new members and organize your team structure.',
             icon: <Users className="w-6 h-6 text-primary" />,
             href: '/team',
@@ -92,12 +145,25 @@ export default function Management() {
             title: 'Permissions',
             description: 'Manage permission groups, access rules, and record-level security. Control who can see and do what.',
             icon: <Shield className="w-6 h-6 text-primary" />,
-            href: '/management/permissions',
+            href: '/permissions',
             stats: [
                 { label: 'Groups', value: '9' },
                 { label: 'Rules', value: '15' },
             ],
         },
+        {
+            title: 'Company Settings',
+            description: 'Manage company profile, billing information, subscription plans, and regional preferences.',
+            icon: <Building2 className="w-6 h-6 text-primary" />,
+            href: '/company-settings',
+            stats: [
+                { label: 'Plan', value: 'Pro' },
+            ],
+        },
+    ];
+
+    // System section cards
+    const systemSections = [
         {
             title: 'Network Settings',
             description: 'Configure network policies, webhooks, and external integrations.',
@@ -118,26 +184,34 @@ export default function Management() {
                 { label: 'Limit', value: '10 GB' },
             ],
         },
+        {
+            title: 'Documentation',
+            description: 'Comprehensive architecture documentation covering modules, extensions, permissions, and multi-tenancy.',
+            icon: <Book className="w-6 h-6 text-primary" />,
+            href: '/documentation',
+            stats: [
+                { label: 'Sections', value: '9' },
+            ],
+        },
     ];
 
     const quickActions = [
-        { title: 'Invite Team Member', icon: <UserPlus className="w-4 h-4" />, href: '/team' },
-        { title: 'Manage Permissions', icon: <Key className="w-4 h-4" />, href: '/management/permissions' },
-        { title: 'Add Webhook', icon: <Globe className="w-4 h-4" />, href: '/management/network' },
-        { title: 'Backup Data', icon: <HardDrive className="w-4 h-4" />, href: '/management/storage' },
+        { title: 'Browse Modules', icon: <Store className="w-4 h-4" />, href: '/marketplace' },
+        { title: 'Create Module', icon: <Wand2 className="w-4 h-4" />, href: '/wizard' },
+        { title: 'Invite Member', icon: <UserPlus className="w-4 h-4" />, href: '/team' },
+        { title: 'Manage Permissions', icon: <Key className="w-4 h-4" />, href: '/permissions' },
     ];
 
     return (
         <DashboardLayout>
-            <DashboardHeader title="Management" subtitle="Manage your team and organization settings" />
+            <DashboardHeader title="Management" subtitle="Manage modules, team, and platform settings" />
             <div className="p-6">
                 {/* Quick Actions */}
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-8"
+                    className="mb-6"
                 >
-                    <h2 className="text-sm font-medium text-muted-foreground mb-3">Quick Actions</h2>
                     <div className="flex flex-wrap gap-2">
                         {quickActions.map((action) => (
                             <Link key={action.title} to={action.href}>
@@ -150,39 +224,92 @@ export default function Management() {
                     </div>
                 </motion.div>
 
-                {/* Management Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {managementSections.map((section, index) => (
-                        <ManagementCard
-                            key={section.title}
-                            {...section}
-                            delay={index * 0.1}
-                        />
-                    ))}
-                </div>
+                {/* Tabbed Sections */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                >
+                    <Tabs defaultValue="modules" className="w-full">
+                        <TabsList className="mb-6">
+                            <TabsTrigger value="modules" className="gap-2">
+                                <Package className="w-4 h-4" />
+                                Modules
+                            </TabsTrigger>
+                            <TabsTrigger value="team" className="gap-2">
+                                <Users className="w-4 h-4" />
+                                Team & Security
+                            </TabsTrigger>
+                            <TabsTrigger value="system" className="gap-2">
+                                <Settings2 className="w-4 h-4" />
+                                System
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="modules">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {modulesSections.map((section, index) => (
+                                    <ManagementCard
+                                        key={section.title}
+                                        {...section}
+                                        delay={index * 0.05}
+                                    />
+                                ))}
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="team">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {teamSections.map((section, index) => (
+                                    <ManagementCard
+                                        key={section.title}
+                                        {...section}
+                                        delay={index * 0.05}
+                                    />
+                                ))}
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="system">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {systemSections.map((section, index) => (
+                                    <ManagementCard
+                                        key={section.title}
+                                        {...section}
+                                        delay={index * 0.05}
+                                    />
+                                ))}
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                </motion.div>
 
                 {/* Organization Overview */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
+                    transition={{ delay: 0.3 }}
                     className="mt-8 p-6 bg-muted/50 rounded-xl"
                 >
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                            <Settings2 className="w-5 h-5 text-muted-foreground" />
-                            <h3 className="font-medium text-foreground">Organization Overview</h3>
+                            <LayoutGrid className="w-5 h-5 text-muted-foreground" />
+                            <h3 className="font-medium text-foreground">Platform Overview</h3>
                         </div>
                         <Badge variant="outline">Free Plan</Badge>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div className="p-4 bg-background rounded-lg">
+                            <p className="text-2xl font-bold text-foreground">7</p>
+                            <p className="text-sm text-muted-foreground">Active Modules</p>
+                        </div>
                         <div className="p-4 bg-background rounded-lg">
                             <p className="text-2xl font-bold text-foreground">3</p>
                             <p className="text-sm text-muted-foreground">Team Members</p>
                         </div>
                         <div className="p-4 bg-background rounded-lg">
-                            <p className="text-2xl font-bold text-foreground">3</p>
-                            <p className="text-sm text-muted-foreground">Active Modules</p>
+                            <p className="text-2xl font-bold text-foreground">9</p>
+                            <p className="text-sm text-muted-foreground">Permission Groups</p>
                         </div>
                         <div className="p-4 bg-background rounded-lg">
                             <p className="text-2xl font-bold text-foreground">2.4 GB</p>

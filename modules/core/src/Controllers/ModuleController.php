@@ -68,6 +68,22 @@ class ModuleController extends Controller
             ], 404);
         }
 
+        // Cache module detail for 5 minutes (300 seconds)
+        $cacheKey = "module_detail:{$moduleName}";
+        $cacheTTL = 300;
+
+        $data = cache()->remember($cacheKey, $cacheTTL, function () use ($module, $moduleName) {
+            return $this->buildModuleDetail($module, $moduleName);
+        });
+
+        return response()->json(['data' => $data]);
+    }
+
+    /**
+     * Build the full module detail array (cacheable)
+     */
+    protected function buildModuleDetail(array $module, string $moduleName): array
+    {
         $manifest = $module['manifest'];
 
         // Get extensions this module provides
@@ -120,28 +136,163 @@ class ModuleController extends Controller
         // Get UI components defined by this module
         $uiComponents = $this->getModuleUIComponents($moduleName, $module['path']);
 
-        return response()->json([
-            'data' => [
-                'id' => $moduleName,
-                'name' => $manifest['displayName'] ?? ucfirst($moduleName),
-                'description' => $manifest['description'] ?? '',
-                'version' => $manifest['version'] ?? '1.0.0',
-                'category' => $manifest['category'] ?? 'General',
-                'author' => $manifest['author'] ?? 'Unknown',
-                'license' => $manifest['license'] ?? 'MIT',
-                'depends' => $manifest['depends'] ?? [],
-                'status' => $this->moduleRegistry->isLoaded($moduleName) ? 'active' : 'inactive',
-                'path' => $module['path'],
-                'extensions' => $extensions,
-                'models' => $models,
-                'permissions' => $manifest['permissions'] ?? [],
-                'settings' => $manifest['settings'] ?? [],
-                'navigation' => $manifest['frontend']['navigation'] ?? null,
-                'routes' => $manifest['routes'] ?? null,
-                'ui' => $uiComponents,
-                'tests' => $this->getModuleTests($moduleName, $module['path']),
-            ],
-        ]);
+        // Get frontend pages and slots in new format
+        $frontendData = $this->getFrontendData($manifest);
+
+        return [
+            'id' => $moduleName,
+            'name' => $manifest['displayName'] ?? ucfirst($moduleName),
+            'description' => $manifest['description'] ?? '',
+            'version' => $manifest['version'] ?? '1.0.0',
+            'category' => $manifest['category'] ?? 'General',
+            'author' => $manifest['author'] ?? 'Unknown',
+            'license' => $manifest['license'] ?? 'MIT',
+            'depends' => $manifest['depends'] ?? [],
+            'status' => $this->moduleRegistry->isLoaded($moduleName) ? 'active' : 'inactive',
+            'path' => $module['path'],
+            'extensions' => $extensions,
+            'models' => $models,
+            'permissions' => $manifest['permissions'] ?? [],
+            'settings' => $manifest['settings'] ?? [],
+            'navigation' => $manifest['frontend']['navigation'] ?? null,
+            'routes' => $manifest['routes'] ?? null,
+            'api' => $this->getModuleApiRoutes($moduleName),
+            'ui' => $uiComponents,
+            'tests' => $this->getModuleTests($moduleName, $module['path']),
+            'frontend' => $frontendData,
+        ];
+    }
+
+    /**
+     * Clear module detail cache
+     */
+    public function clearCache(string $moduleName): JsonResponse
+    {
+        cache()->forget("module_detail:{$moduleName}");
+        return response()->json(['message' => 'Cache cleared']);
+    }
+
+    /**
+     * Get frontend data (pages, slots) from manifest
+     */
+    protected function getFrontendData(array $manifest): array
+    {
+        $pages = [];
+        $slots = [];
+
+        $manifestPages = $manifest['frontend']['pages'] ?? [];
+        
+        // Check if it's the new array format
+        if (!empty($manifestPages)) {
+            $firstPage = reset($manifestPages);
+            if (is_array($firstPage) && isset($firstPage['id'])) {
+                // New format: array of page objects with layout info
+                $pages = $manifestPages;
+            } else {
+                // Old format: convert to new format
+                foreach ($manifestPages as $route => $pagePath) {
+                    $pages[] = [
+                        'id' => basename($pagePath, '.tsx'),
+                        'path' => $route,
+                        'title' => ucwords(str_replace(['-', '_'], ' ', basename($pagePath, '.tsx'))),
+                        'component' => $pagePath,
+                        'template' => 'generic',
+                        'layout' => ['regions' => []],
+                    ];
+                }
+            }
+        }
+
+        // Get slots (new format)
+        $slots = $manifest['frontend']['slots'] ?? [];
+
+        // If no slots but has extensionPoints (old format), convert
+        if (empty($slots) && !empty($manifest['frontend']['extensionPoints'])) {
+            foreach ($manifest['frontend']['extensionPoints'] as $name => $config) {
+                $slots[] = [
+                    'id' => $name,
+                    'description' => $config['description'] ?? null,
+                    'region' => $config['type'] ?? 'generic',
+                ];
+            }
+        }
+
+        return [
+            'pages' => $pages,
+            'slots' => $slots,
+        ];
+    }
+
+    /**
+     * Get API routes for a module
+     */
+    protected function getModuleApiRoutes(string $moduleName): array
+    {
+        $routes = [];
+        $allRoutes = \Illuminate\Support\Facades\Route::getRoutes();
+
+        // Module namespace patterns to match
+        $namespacePatterns = [
+            "Modules\\" . ucfirst($moduleName),
+            "Modules\\" . strtoupper($moduleName),
+            "Modules\\" . $moduleName,
+        ];
+
+        foreach ($allRoutes as $route) {
+            $action = $route->getAction();
+            $controller = $action['controller'] ?? null;
+
+            if (!$controller) {
+                continue;
+            }
+
+            // Check if this route belongs to the module
+            $belongsToModule = false;
+            foreach ($namespacePatterns as $pattern) {
+                if (str_contains($controller, $pattern)) {
+                    $belongsToModule = true;
+                    break;
+                }
+            }
+
+            if (!$belongsToModule) {
+                continue;
+            }
+
+            // Extract controller and method
+            $controllerParts = explode('@', $controller);
+            $controllerClass = $controllerParts[0] ?? '';
+            $method = $controllerParts[1] ?? 'index';
+
+            // Get short controller name
+            $shortController = class_basename($controllerClass);
+
+            // Get middleware
+            $middleware = $route->middleware();
+            $hasAuth = in_array('auth', $middleware) || in_array('auth', $middleware);
+            $modelAccess = null;
+            foreach ($middleware as $mw) {
+                if (str_starts_with($mw, 'model.access:')) {
+                    $modelAccess = str_replace('model.access:', '', $mw);
+                    break;
+                }
+            }
+
+            $routes[] = [
+                'method' => implode('|', $route->methods()),
+                'uri' => '/' . $route->uri(),
+                'name' => $route->getName(),
+                'controller' => $shortController,
+                'action' => $method,
+                'authenticated' => $hasAuth,
+                'modelAccess' => $modelAccess,
+            ];
+        }
+
+        // Sort by URI
+        usort($routes, fn($a, $b) => strcmp($a['uri'], $b['uri']));
+
+        return $routes;
     }
 
     /**
@@ -201,35 +352,42 @@ class ModuleController extends Controller
     protected function parseSpecFile(string $content): array
     {
         $suites = [];
+        $seenTests = [];
 
-        // Match test.describe blocks
+        // Match all test names in the file (each test is counted once)
+        preg_match_all('/test\s*\(\s*[\'"]([^\'"]+)[\'"]/', $content, $allTests);
+        $uniqueTests = array_values(array_unique($allTests[1] ?? []));
+
+        // Match test.describe blocks to get suite names
         preg_match_all('/test\.describe\s*\(\s*[\'"]([^\'"]+)[\'"]/', $content, $describes);
+        $suiteNames = array_values(array_unique($describes[1] ?? []));
         
-        foreach ($describes[1] as $suiteName) {
-            $tests = [];
+        if (!empty($suiteNames)) {
+            // If we have describe blocks, group tests by their approximate position
+            // For simplicity, we'll distribute tests among suites or put them in a single suite
+            // A more accurate approach would need full AST parsing
             
-            // Find tests within this describe block
-            // This is a simplified approach - might not capture nested describes perfectly
-            $pattern = '/test\s*\(\s*[\'"]([^\'"]+)[\'"]/';
-            preg_match_all($pattern, $content, $testMatches);
-            
-            if (!empty($testMatches[1])) {
-                $tests = array_values(array_unique($testMatches[1]));
+            // Just create one suite per unique describe name with the tests listed once
+            foreach ($suiteNames as $suiteName) {
+                $suites[] = [
+                    'name' => $suiteName,
+                    'tests' => [], // We'll list tests separately to avoid counting multiple times
+                ];
             }
             
-            $suites[] = [
-                'name' => $suiteName,
-                'tests' => $tests,
-            ];
-        }
-
-        // If no describes found, just get all tests
-        if (empty($suites)) {
-            preg_match_all('/test\s*\(\s*[\'"]([^\'"]+)[\'"]/', $content, $testMatches);
-            if (!empty($testMatches[1])) {
+            // Put all unique tests in a summary suite
+            if (!empty($uniqueTests)) {
+                $suites = [[
+                    'name' => 'All Tests',
+                    'tests' => $uniqueTests,
+                ]];
+            }
+        } else {
+            // No describes, put all tests in default suite
+            if (!empty($uniqueTests)) {
                 $suites[] = [
                     'name' => 'Default',
-                    'tests' => array_values(array_unique($testMatches[1])),
+                    'tests' => $uniqueTests,
                 ];
             }
         }
@@ -275,6 +433,11 @@ class ModuleController extends Controller
             
             if (class_exists($fullClassName)) {
                 $reflection = new \ReflectionClass($fullClassName);
+                
+                // Skip abstract classes
+                if ($reflection->isAbstract()) {
+                    continue;
+                }
                 
                 // Get fillable fields from the model
                 $instance = $reflection->newInstanceWithoutConstructor();
@@ -324,11 +487,71 @@ class ModuleController extends Controller
             'extensions' => [],
             'layouts' => [],
             'pages' => [],
+            'extensionPoints' => [],
         ];
+
+        // First, get pages and extension points from manifest
+        $module = $this->moduleRegistry->get($moduleName);
+        if ($module) {
+            $manifest = $module['manifest'];
+            
+            // Get pages from manifest (supports both old object format and new array format)
+            $manifestPages = $manifest['frontend']['pages'] ?? [];
+            if (is_array($manifestPages) && !empty($manifestPages)) {
+                // Check if it's the new array format (has 'id' key in first element)
+                $firstPage = reset($manifestPages);
+                if (is_array($firstPage) && isset($firstPage['id'])) {
+                    // New format: array of page objects
+                    foreach ($manifestPages as $page) {
+                        $components['pages'][] = [
+                            'name' => $page['title'] ?? $page['id'],
+                            'type' => 'page',
+                            'route' => $page['path'] ?? '',
+                            'path' => $page['component'] ?? '',
+                            'template' => $page['template'] ?? null,
+                            'layout' => $page['layout'] ?? null,
+                            'source' => 'manifest',
+                        ];
+                    }
+                } else {
+                    // Old format: {route: pagePath}
+                    foreach ($manifestPages as $route => $pagePath) {
+                        $components['pages'][] = [
+                            'name' => basename($pagePath, '.tsx'),
+                            'type' => 'page',
+                            'route' => $route,
+                            'path' => $pagePath,
+                            'source' => 'manifest',
+                        ];
+                    }
+                }
+            }
+
+            // Get slots from manifest (new format)
+            $manifestSlots = $manifest['frontend']['slots'] ?? [];
+            foreach ($manifestSlots as $slot) {
+                $components['slots'][] = [
+                    'id' => $slot['id'] ?? '',
+                    'description' => $slot['description'] ?? null,
+                    'region' => $slot['region'] ?? null,
+                ];
+            }
+
+            // Get extension points from manifest (old format, for backward compatibility)
+            $extensionPoints = $manifest['frontend']['extensionPoints'] ?? [];
+            foreach ($extensionPoints as $name => $config) {
+                $components['extensionPoints'][] = [
+                    'name' => $name,
+                    'type' => $config['type'] ?? 'generic',
+                    'description' => $config['description'] ?? null,
+                ];
+            }
+        }
 
         $frontendPath = $path . '/frontend';
         if (!is_dir($frontendPath)) {
-            return $components;
+            // Return manifest-based components even if no frontend folder
+            return array_filter($components, fn($arr) => !empty($arr));
         }
 
         // Scan views directory
@@ -355,10 +578,17 @@ class ModuleController extends Controller
             $components['layouts'] = $this->scanTypeScriptFiles($layoutPath, 'layout');
         }
 
-        // Scan pages directory
+        // Scan pages directory (merge with manifest pages)
         $pagesPath = $frontendPath . '/pages';
         if (is_dir($pagesPath)) {
-            $components['pages'] = $this->scanTypeScriptFiles($pagesPath, 'page');
+            $scannedPages = $this->scanTypeScriptFiles($pagesPath, 'page');
+            // Only add pages not already from manifest
+            $existingNames = array_column($components['pages'], 'name');
+            foreach ($scannedPages as $page) {
+                if (!in_array($page['name'], $existingNames)) {
+                    $components['pages'][] = $page;
+                }
+            }
         }
 
         // Scan components directory

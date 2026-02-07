@@ -23,15 +23,23 @@ export { ModuleSearch } from './ModuleSearch';
 // Fields
 export * from './fields';
 
-// Extensions
+/**
+ * Extensions - DEPRECATED
+ * Use '@/lib/extensions' instead for the unified extension system.
+ * 
+ * These exports are kept for backward compatibility.
+ */
 export {
-    ExtensionProvider,
-    ExtensionPoint,
-    ConditionalExtensionPoint,
+    UnifiedExtensionProvider as ExtensionProvider,
+    ExtensionSlot as ExtensionPoint,
+    ExtensionSlot as ConditionalExtensionPoint,
     FormExtensionSlot,
     DetailExtensionSlot,
     ListExtensionSlot,
-    useExtensions,
-    useHasExtensions,
-    useRegisterExtension,
-} from './ExtensionPoint';
+    useSlotExtensions as useExtensions,
+    registerExtension as useRegisterExtension,
+} from '@/lib/extensions';
+
+// Re-export the hook for checking extensions
+import { useSlotExtensions } from '@/lib/extensions';
+export const useHasExtensions = (slot: string) => useSlotExtensions(slot).hasExtensions;

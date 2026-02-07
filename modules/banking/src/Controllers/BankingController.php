@@ -12,9 +12,14 @@ use Modules\Banking\Models\ReconcileModel;
 use Modules\Banking\Models\BankImportHistory;
 use Modules\Banking\Services\ImportService;
 use Modules\Banking\Services\ReconciliationService;
+use Modules\Core\Traits\HasModelPermissions;
 
 class BankingController extends Controller
 {
+    use HasModelPermissions;
+
+    protected ?string $modelIdentifier = 'banking.bankstatement';
+
     public function __construct(
         protected ImportService $importService,
         protected ReconciliationService $reconciliationService

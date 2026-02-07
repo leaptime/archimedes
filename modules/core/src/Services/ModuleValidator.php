@@ -209,11 +209,19 @@ class ModuleValidator
         }
 
         $frontendBasePath = base_path('resources/js');
+        $pages = $manifest['frontend']['pages'];
         
-        foreach ($manifest['frontend']['pages'] as $route => $pagePath) {
-            // Handle different page path formats (string or array)
-            if (is_array($pagePath)) {
-                $pagePath = $pagePath['component'] ?? $pagePath['file'] ?? null;
+        // Check if it's the new array format
+        $firstPage = reset($pages);
+        $isNewFormat = is_array($firstPage) && isset($firstPage['id']);
+        
+        foreach ($pages as $key => $page) {
+            // Determine the page path based on format
+            if ($isNewFormat) {
+                $pagePath = $page['component'] ?? null;
+            } else {
+                // Old format: {route: pagePath} or {route: {component: path}}
+                $pagePath = is_array($page) ? ($page['component'] ?? $page['file'] ?? null) : $page;
             }
             
             if (!is_string($pagePath)) {

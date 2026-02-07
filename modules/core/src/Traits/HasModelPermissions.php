@@ -14,7 +14,7 @@ use Illuminate\Http\JsonResponse;
 trait HasModelPermissions
 {
     protected ?PermissionService $permissionService = null;
-    protected ?string $modelIdentifier = null;
+    // Note: Controllers using this trait should define: protected ?string $modelIdentifier = 'module.model';
 
     /**
      * Get the permission service instance
@@ -29,10 +29,13 @@ trait HasModelPermissions
 
     /**
      * Set the model identifier for this controller
+     * Note: Prefer defining $modelIdentifier as a class property
      */
     protected function setModelIdentifier(string $identifier): void
     {
-        $this->modelIdentifier = $identifier;
+        if (property_exists($this, 'modelIdentifier')) {
+            $this->modelIdentifier = $identifier;
+        }
     }
 
     /**
@@ -40,7 +43,9 @@ trait HasModelPermissions
      */
     protected function getModelIdentifier(): string
     {
-        return $this->modelIdentifier ?? $this->guessModelIdentifier();
+        return property_exists($this, 'modelIdentifier') && $this->modelIdentifier 
+            ? $this->modelIdentifier 
+            : $this->guessModelIdentifier();
     }
 
     /**

@@ -50,7 +50,7 @@ import {
     ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ExtensionPoint, DetailExtensionSlot } from '@/components/modules';
+import { ExtensionSlot, DetailExtensionSlot, ExtensionFieldsDisplay } from '@/lib/extensions';
 import { AddressManager, type Address } from '@modules/contacts/frontend/components/AddressManager';
 import { BankAccountManager, type BankAccount } from '@modules/contacts/frontend/components/BankAccountManager';
 
@@ -543,9 +543,9 @@ export default function ContactDetail() {
                                         Notes
                                     </TabsTrigger>
                                     {/* Extension point for additional tabs from other modules */}
-                                    <ExtensionPoint 
+                                    <ExtensionSlot 
                                         name="contacts.detail.tabs" 
-                                        context={{ contact, activeTab, setActiveTab }}
+                                        context={{ entity: contact, activeTab, setActiveTab }}
                                     />
                                 </TabsList>
 
@@ -702,13 +702,33 @@ export default function ContactDetail() {
                             </Tabs>
                         </motion.div>
 
-                        {/* Extension point for additional sections below tabs */}
-                        <DetailExtensionSlot
-                            name="contacts.detail.below-tabs"
-                            entity={contact}
-                            onRefresh={() => refetch()}
-                            className="space-y-6"
+                        {/* Extension Fields Display - shows any custom fields from extensions */}
+                        <ExtensionFieldsDisplay
+                            model="Contact"
+                            data={contact}
+                            className="bg-card border border-border rounded-xl p-6"
                         />
+
+                        {/* Extension point for sidebar cards (CRM scoring, etc.) */}
+                        <div className="grid md:grid-cols-3 gap-6">
+                            <div className="md:col-span-2">
+                                {/* Extension point for additional sections below tabs */}
+                                <DetailExtensionSlot
+                                    name="contacts.detail.below-tabs"
+                                    entity={contact}
+                                    onRefresh={() => refetch()}
+                                    className="space-y-6"
+                                />
+                            </div>
+                            <div className="space-y-4">
+                                {/* Extension point for sidebar - loads both static and dynamic extensions */}
+                                <ExtensionSlot
+                                    name="contacts.detail.sidebar"
+                                    context={{ entity: contact, onRefresh: () => refetch() }}
+                                    className="space-y-4"
+                                />
+                            </div>
+                        </div>
                     </div>
                 ) : null}
 

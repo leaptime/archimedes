@@ -1,0 +1,128 @@
+{
+    "id": "contact-crm-scoring",
+    "name": "Contact CRM Scoring",
+    "version": "1.0.0",
+    "description": "Adds lead scoring and engagement tracking fields to contacts for CRM purposes",
+    "author": "Archimedes Verified",
+    "authorUrl": "https://archimedes.io",
+    "license": "Commercial",
+    "trustLevel": "verified",
+    "category": "crm",
+    "icon": "target",
+    "extends": [
+        "contacts >= 1.0"
+    ],
+    "capabilities": [
+        "ui.slots",
+        "api.read",
+        "api.write",
+        "fields.add",
+        "events.listen"
+    ],
+    "fields": [
+        {
+            "model": "Contact",
+            "name": "lead_score",
+            "label": "Lead Score",
+            "type": "integer",
+            "required": false,
+            "validation": {
+                "min": 0,
+                "max": 100
+            },
+            "helpText": "Automatically calculated score (0-100) based on engagement",
+            "group": "crm"
+        },
+        {
+            "model": "Contact",
+            "name": "lead_temperature",
+            "label": "Lead Temperature",
+            "type": "select",
+            "required": false,
+            "options": [
+                {"value": "cold", "label": "Cold"},
+                {"value": "warm", "label": "Warm"},
+                {"value": "hot", "label": "Hot"}
+            ],
+            "group": "crm"
+        },
+        {
+            "model": "Contact",
+            "name": "last_engagement_date",
+            "label": "Last Engagement",
+            "type": "date",
+            "required": false,
+            "helpText": "Last date of meaningful interaction",
+            "group": "crm"
+        },
+        {
+            "model": "Contact",
+            "name": "engagement_count",
+            "label": "Engagement Count",
+            "type": "integer",
+            "required": false,
+            "validation": {
+                "min": 0
+            },
+            "helpText": "Total number of interactions",
+            "group": "crm"
+        }
+    ],
+    "slots": [
+        {
+            "slot": "contacts.form.additional-fields",
+            "component": "frontend/CrmScoringFormSection.tsx",
+            "priority": 30
+        },
+        {
+            "slot": "contacts.detail.sidebar",
+            "component": "frontend/CrmScoringCard.tsx",
+            "priority": 20
+        },
+        {
+            "slot": "contacts.list.columns",
+            "component": "frontend/CrmScoringColumn.tsx",
+            "priority": 50
+        }
+    ],
+    "events": [
+        {
+            "type": "listen",
+            "event": "contact.updated",
+            "handler": "src/handlers/recalculate-score.php"
+        },
+        {
+            "type": "listen",
+            "event": "invoice.created",
+            "handler": "src/handlers/track-engagement.php"
+        }
+    ],
+    "routes": [
+        {
+            "method": "POST",
+            "uri": "contacts/{id}/recalculate-score",
+            "handler": "src/routes/recalculate-score.php",
+            "middleware": []
+        }
+    ],
+    "settings": [
+        {
+            "key": "autoRecalculate",
+            "type": "boolean",
+            "label": "Auto-recalculate scores",
+            "default": true
+        },
+        {
+            "key": "scoringWeights",
+            "type": "json",
+            "label": "Scoring Weights",
+            "default": {
+                "email_opened": 5,
+                "email_clicked": 10,
+                "form_submitted": 20,
+                "meeting_scheduled": 30,
+                "invoice_paid": 50
+            }
+        }
+    ]
+}

@@ -110,7 +110,8 @@
         "baseUrl": ".",
         "paths": {
             "@/*": ["./resources/js/*"],
-            "@modules/*": ["./modules/*"]
+            "@modules/*": ["./modules/*"],
+            "@plugins/*": ["./plugins/*"]
         },
         "jsx": "react-jsx"
     },
@@ -119,6 +120,8 @@
         "resources/js/**/*.d.ts", 
         "resources/js/**/*.tsx",
         "modules/**/*.ts",
-        "modules/**/*.tsx"
+        "modules/**/*.tsx",
+        "plugins/**/*.ts",
+        "plugins/**/*.tsx"
     ]
 }

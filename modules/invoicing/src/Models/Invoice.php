@@ -16,6 +16,8 @@ class Invoice extends ExtendableModel
 
     protected $table = 'invoices';
 
+    public const MODEL_IDENTIFIER = 'invoicing.invoice';
+
     // Move types (like Odoo's account.move)
     const MOVE_TYPE_OUT_INVOICE = 'out_invoice';   // Customer Invoice
     const MOVE_TYPE_OUT_REFUND = 'out_refund';     // Customer Credit Note

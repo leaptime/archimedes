@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\L10nItEdi\Controllers\L10nItEdiController;
 
-Route::middleware(['web', 'auth:sanctum'])->prefix('api/l10n-it-edi')->group(function () {
+Route::middleware(['web', 'auth.session'])->prefix('api/l10n-it-edi')->group(function () {
     // Invoice EDI actions
     Route::post('/invoices/{invoice}/send', [L10nItEdiController::class, 'send']);
     Route::get('/invoices/{invoice}/status', [L10nItEdiController::class, 'status']);

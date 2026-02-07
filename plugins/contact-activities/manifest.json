@@ -1,0 +1,189 @@
+{
+    "id": "contact-activities",
+    "name": "Contact Activity Tracking",
+    "version": "1.0.0",
+    "description": "Comprehensive activity tracking for contacts with timeline, tasks, notes, and scheduled activities",
+    "author": "Archimedes Certified Partner",
+    "authorUrl": "https://archimedes.io",
+    "license": "Commercial",
+    "trustLevel": "certified",
+    "category": "crm",
+    "icon": "activity",
+    "extends": [
+        "contacts >= 1.0"
+    ],
+    "capabilities": [
+        "ui.slots",
+        "ui.pages",
+        "api.read",
+        "api.write",
+        "api.routes",
+        "fields.add",
+        "models.create",
+        "migrations",
+        "events.listen",
+        "events.emit"
+    ],
+    "models": [
+        {
+            "name": "ContactActivity",
+            "table": "ext_contact_activities",
+            "class": "src/Models/ContactActivity.php",
+            "fillable": ["contact_id", "user_id", "type", "title", "description", "scheduled_at", "completed_at", "metadata"],
+            "relationships": [
+                {"type": "belongsTo", "model": "Contact", "foreignKey": "contact_id"},
+                {"type": "belongsTo", "model": "User", "foreignKey": "user_id"}
+            ]
+        },
+        {
+            "name": "ContactNote",
+            "table": "ext_contact_notes",
+            "class": "src/Models/ContactNote.php",
+            "fillable": ["contact_id", "user_id", "content", "is_pinned"],
+            "relationships": [
+                {"type": "belongsTo", "model": "Contact", "foreignKey": "contact_id"},
+                {"type": "belongsTo", "model": "User", "foreignKey": "user_id"}
+            ]
+        }
+    ],
+    "migrations": [
+        "migrations/2024_01_01_000001_create_contact_activities_table.php",
+        "migrations/2024_01_01_000002_create_contact_notes_table.php"
+    ],
+    "fields": [
+        {
+            "model": "Contact",
+            "name": "activity_count",
+            "label": "Activity Count",
+            "type": "integer",
+            "computed": true,
+            "helpText": "Total number of activities"
+        },
+        {
+            "model": "Contact",
+            "name": "next_activity_date",
+            "label": "Next Activity",
+            "type": "datetime",
+            "computed": true,
+            "helpText": "Date of next scheduled activity"
+        }
+    ],
+    "slots": [
+        {
+            "slot": "contacts.detail.tabs",
+            "component": "frontend/ActivitiesTab.tsx",
+            "priority": 20,
+            "props": {
+                "tabId": "activities",
+                "tabLabel": "Activities"
+            }
+        },
+        {
+            "slot": "contacts.detail.tabs",
+            "component": "frontend/NotesTab.tsx",
+            "priority": 30,
+            "props": {
+                "tabId": "notes",
+                "tabLabel": "Notes"
+            }
+        },
+        {
+            "slot": "contacts.detail.sidebar",
+            "component": "frontend/UpcomingActivitiesCard.tsx",
+            "priority": 10
+        },
+        {
+            "slot": "contacts.list.row-actions",
+            "component": "frontend/QuickActivityButton.tsx",
+            "priority": 50
+        }
+    ],
+    "routes": [
+        {
+            "method": "GET",
+            "uri": "contacts/{contactId}/activities",
+            "handler": "src/Controllers/ActivityController.php@index"
+        },
+        {
+            "method": "POST",
+            "uri": "contacts/{contactId}/activities",
+            "handler": "src/Controllers/ActivityController.php@store"
+        },
+        {
+            "method": "PUT",
+            "uri": "activities/{id}",
+            "handler": "src/Controllers/ActivityController.php@update"
+        },
+        {
+            "method": "DELETE",
+            "uri": "activities/{id}",
+            "handler": "src/Controllers/ActivityController.php@destroy"
+        },
+        {
+            "method": "POST",
+            "uri": "activities/{id}/complete",
+            "handler": "src/Controllers/ActivityController.php@complete"
+        },
+        {
+            "method": "GET",
+            "uri": "contacts/{contactId}/notes",
+            "handler": "src/Controllers/NoteController.php@index"
+        },
+        {
+            "method": "POST",
+            "uri": "contacts/{contactId}/notes",
+            "handler": "src/Controllers/NoteController.php@store"
+        },
+        {
+            "method": "PUT",
+            "uri": "notes/{id}",
+            "handler": "src/Controllers/NoteController.php@update"
+        },
+        {
+            "method": "DELETE",
+            "uri": "notes/{id}",
+            "handler": "src/Controllers/NoteController.php@destroy"
+        }
+    ],
+    "events": [
+        {
+            "type": "listen",
+            "event": "contact.created",
+            "handler": "src/handlers/init-activity-tracking.php"
+        },
+        {
+            "type": "emit",
+            "event": "activity.created",
+            "description": "Fired when a new activity is created"
+        },
+        {
+            "type": "emit",
+            "event": "activity.completed",
+            "description": "Fired when an activity is marked as complete"
+        }
+    ],
+    "settings": [
+        {
+            "key": "activityTypes",
+            "type": "json",
+            "label": "Activity Types",
+            "default": [
+                {"id": "call", "label": "Phone Call", "icon": "phone", "color": "blue"},
+                {"id": "email", "label": "Email", "icon": "mail", "color": "green"},
+                {"id": "meeting", "label": "Meeting", "icon": "users", "color": "purple"},
+                {"id": "task", "label": "Task", "icon": "check-square", "color": "orange"},
+                {"id": "deadline", "label": "Deadline", "icon": "clock", "color": "red"}
+            ]
+        },
+        {
+            "key": "reminderSettings",
+            "type": "json",
+            "label": "Reminder Settings",
+            "default": {
+                "enabled": true,
+                "defaultMinutesBefore": 30,
+                "channels": ["email", "notification"]
+            }
+        }
+    ]
+}

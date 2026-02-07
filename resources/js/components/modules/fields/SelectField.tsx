@@ -76,7 +76,7 @@ export function SelectField({
                     {allowClear && (
                         <SelectItem value="__clear__">{clearLabel}</SelectItem>
                     )}
-                    {options.map((option) => (
+                    {options.filter(o => o.value).map((option) => (
                         <SelectItem
                             key={option.value}
                             value={option.value}

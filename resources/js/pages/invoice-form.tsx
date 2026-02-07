@@ -528,14 +528,15 @@ export default function InvoiceFormPage() {
                                     <div className="space-y-2">
                                         <Label>Payment Terms</Label>
                                         <Select
-                                            value={formData.payment_term_id?.toString() || ''}
-                                            onValueChange={handlePaymentTermChange}
+                                            value={formData.payment_term_id?.toString() || 'none'}
+                                            onValueChange={(v) => v !== 'none' && handlePaymentTermChange(v)}
                                         >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select term..." />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {paymentTerms.map((term) => (
+                                                <SelectItem value="none">Select term...</SelectItem>
+                                                {paymentTerms.filter(t => t.id).map((term) => (
                                                     <SelectItem key={term.id} value={term.id.toString()}>
                                                         {term.name}
                                                     </SelectItem>
@@ -600,14 +601,15 @@ export default function InvoiceFormPage() {
                                                         <TableCell>
                                                             <div className="space-y-1">
                                                                 <Select
-                                                                    value={line.product_id?.toString() || ''}
-                                                                    onValueChange={(value) => handleProductSelect(line.tempId, parseInt(value))}
+                                                                    value={line.product_id?.toString() || 'none'}
+                                                                    onValueChange={(value) => value !== 'none' && handleProductSelect(line.tempId, parseInt(value))}
                                                                 >
                                                                     <SelectTrigger className="h-8">
                                                                         <SelectValue placeholder="Select product..." />
                                                                     </SelectTrigger>
                                                                     <SelectContent>
-                                                                        {products.map((product) => (
+                                                                        <SelectItem value="none">Select product...</SelectItem>
+                                                                        {products.filter(p => p.id).map((product) => (
                                                                             <SelectItem key={product.id} value={product.id.toString()}>
                                                                                 {product.name}
                                                                             </SelectItem>
@@ -663,7 +665,7 @@ export default function InvoiceFormPage() {
                                                                 </SelectTrigger>
                                                                 <SelectContent>
                                                                     <SelectItem value="none">No tax</SelectItem>
-                                                                    {taxes.filter(t => t.type === 'percent').map((tax) => (
+                                                                    {taxes.filter(t => t.id && t.type === 'percent').map((tax) => (
                                                                         <SelectItem key={tax.id} value={tax.id.toString()}>
                                                                             {tax.name} ({tax.amount}%)
                                                                         </SelectItem>
@@ -786,14 +788,15 @@ export default function InvoiceFormPage() {
                             </CardHeader>
                             <CardContent>
                                 <Select
-                                    value={formData.currency_id?.toString() || ''}
-                                    onValueChange={(value) => setFormData({ ...formData, currency_id: parseInt(value) })}
+                                    value={formData.currency_id?.toString() || 'none'}
+                                    onValueChange={(value) => value !== 'none' && setFormData({ ...formData, currency_id: parseInt(value) })}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Default currency" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {currencies.map((currency) => (
+                                        <SelectItem value="none">Default currency</SelectItem>
+                                        {currencies.filter(c => c.id).map((currency) => (
                                             <SelectItem key={currency.id} value={currency.id.toString()}>
                                                 {currency.code} - {currency.name}
                                             </SelectItem>

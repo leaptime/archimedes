@@ -2,13 +2,9 @@ import { cn } from '@/lib/utils';
 import { NavLink } from '@/components/NavLink';
 import {
     LayoutDashboard,
-    Store,
     HelpCircle,
     ChevronLeft,
     ChevronRight,
-    Boxes,
-    Wand2,
-    ArrowUpCircle,
     Layers,
     Users,
     FileText,
@@ -18,7 +14,6 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
 import { ArchimedesIcon } from '@/components/icons/ArchimedesIcon';
 
 interface AppSidebarProps {
@@ -48,19 +43,12 @@ const moduleNavItems: NavItem[] = [
     { title: 'Banking', url: '/banking', icon: Landmark },
 ];
 
-// Management section with submenu
+// Management - single link, no submenu
 const managementItem: NavItem = {
     title: 'Management',
     url: '/management',
     icon: Layers,
-    hasSubmenu: true,
-    submenu: [
-        { title: 'Overview', url: '/management' },
-        { title: 'My Modules', url: '/my-modules' },
-        { title: 'Marketplace', url: '/marketplace' },
-        { title: 'Wizard', url: '/wizard' },
-        { title: 'Upgrades', url: '/upgrades' },
-    ],
+    hasSubmenu: false,
 };
 
 const bottomNavItems: NavItem[] = [
@@ -68,8 +56,6 @@ const bottomNavItems: NavItem[] = [
 ];
 
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
-    const [expandedMenu, setExpandedMenu] = useState<string | null>('Dashboard');
-
     return (
         <motion.aside
             initial={false}
@@ -214,59 +200,32 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                 )}
                 {collapsed && <div className="h-3" />}
 
-                <div>
-                    <button
-                        onClick={() =>
-                            setExpandedMenu(expandedMenu === 'Management' ? null : 'Management')
-                        }
-                        className={cn(
-                            'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg',
-                            'text-muted-foreground',
-                            'hover:text-foreground hover:bg-accent',
-                            'transition-colors duration-100',
-                            collapsed && 'justify-center px-2'
-                        )}
-                    >
-                        <managementItem.icon className="w-[18px] h-[18px] flex-shrink-0" />
+                <NavLink
+                    to={managementItem.url}
+                    className={cn(
+                        'flex items-center gap-3 px-3 py-2.5 rounded-lg',
+                        'text-muted-foreground',
+                        'hover:text-foreground hover:bg-accent',
+                        'transition-colors duration-100',
+                        collapsed && 'justify-center px-2'
+                    )}
+                    activeClassName="text-foreground bg-accent"
+                >
+                    <managementItem.icon className="w-[18px] h-[18px] flex-shrink-0" />
+                    <AnimatePresence mode="wait">
                         {!collapsed && (
-                            <>
-                                <span className="text-sm font-medium flex-1 text-left">
-                                    {managementItem.title}
-                                </span>
-                                <ChevronRight
-                                    className={cn(
-                                        'w-4 h-4 text-muted-foreground transition-transform',
-                                        expandedMenu === 'Management' && 'rotate-90'
-                                    )}
-                                />
-                            </>
-                        )}
-                    </button>
-                    <AnimatePresence>
-                        {!collapsed && expandedMenu === 'Management' && managementItem.submenu && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.15 }}
-                                className="overflow-hidden"
+                            <motion.span
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.1 }}
+                                className="text-sm font-medium"
                             >
-                                <div className="pl-9 py-1 space-y-0.5">
-                                    {managementItem.submenu.map((subitem) => (
-                                        <NavLink
-                                            key={subitem.title}
-                                            to={subitem.url}
-                                            className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground rounded-md transition-colors"
-                                            activeClassName="text-foreground font-medium"
-                                        >
-                                            {subitem.title}
-                                        </NavLink>
-                                    ))}
-                                </div>
-                            </motion.div>
+                                {managementItem.title}
+                            </motion.span>
                         )}
                     </AnimatePresence>
-                </div>
+                </NavLink>
             </nav>
 
             {/* Bottom Navigation */}

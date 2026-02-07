@@ -273,16 +273,18 @@ class ContactController extends Controller
                 'vendors' => Contact::contacts()->vendors()->count(),
                 'active' => Contact::contacts()->active()->count(),
                 'by_industry' => Industry::withCount('contacts')
-                    ->having('contacts_count', '>', 0)
-                    ->orderByDesc('contacts_count')
-                    ->limit(10)
                     ->get()
+                    ->filter(fn($i) => $i->contacts_count > 0)
+                    ->sortByDesc('contacts_count')
+                    ->take(10)
+                    ->values()
                     ->map(fn($i) => ['name' => $i->name, 'count' => $i->contacts_count]),
                 'by_country' => Country::withCount('contacts')
-                    ->having('contacts_count', '>', 0)
-                    ->orderByDesc('contacts_count')
-                    ->limit(10)
                     ->get()
+                    ->filter(fn($c) => $c->contacts_count > 0)
+                    ->sortByDesc('contacts_count')
+                    ->take(10)
+                    ->values()
                     ->map(fn($c) => ['name' => $c->name, 'code' => $c->code, 'count' => $c->contacts_count]),
             ],
         ]);

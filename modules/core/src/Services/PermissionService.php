@@ -568,9 +568,12 @@ class PermissionService
     {
         if (!$user) return false;
         
-        // Check for super admin flag or group
-        return $user->is_super_admin ?? 
-               $this->hasGroup('base.group_system', $user);
+        // Check for super admin flag, platform admin flag, owner role, or group
+        if ($user->is_super_admin ?? false) return true;
+        if ($user->is_platform_admin ?? false) return true;
+        if ($user->role === 'owner') return true;
+        
+        return $this->hasGroup('base.group_system', $user);
     }
 
     /**

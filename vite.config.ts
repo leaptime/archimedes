@@ -21,6 +21,7 @@ export default defineConfig({
         alias: {
             '@': path.resolve(__dirname, './resources/js'),
             '@modules': path.resolve(__dirname, './modules'),
+            '@plugins': path.resolve(__dirname, './plugins'),
         },
     },
     server: {

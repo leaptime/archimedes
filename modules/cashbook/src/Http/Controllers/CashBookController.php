@@ -9,9 +9,14 @@ use Modules\CashBook\Models\CashBookEntry;
 use Modules\CashBook\Models\CashBookAllocation;
 use Modules\CashBook\Services\CashBookService;
 use Modules\Invoicing\Models\Invoice;
+use Modules\Core\Traits\HasModelPermissions;
 
 class CashBookController extends Controller
 {
+    use HasModelPermissions;
+
+    protected ?string $modelIdentifier = 'cashbook.entry';
+
     public function __construct(
         private CashBookService $cashBookService
     ) {}
@@ -21,7 +26,12 @@ class CashBookController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = CashBookEntry::with(['contact', 'bankAccount', 'allocations.invoice']);
+        if ($denied = $this->authorizeAccess('read')) {
+            return $denied;
+        }
+
+        $query = CashBookEntry::with(['contact', 'bankAccount', 'allocations.invoice'])
+            ->withRecordRules('read');
 
         // Filters
         if ($request->filled('type')) {

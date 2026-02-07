@@ -1,0 +1,46 @@
+{
+    "id": "contact-social-links",
+    "name": "Contact Social Links",
+    "version": "1.0.0",
+    "description": "Adds social media links (LinkedIn, Twitter, GitHub) to contact forms and detail views",
+    "author": "Archimedes Community",
+    "authorUrl": "https://archimedes.io",
+    "license": "MIT",
+    "trustLevel": "community",
+    "category": "contacts",
+    "icon": "share-2",
+    "extends": [
+        "contacts >= 1.0"
+    ],
+    "capabilities": [
+        "ui.slots",
+        "api.read"
+    ],
+    "slots": [
+        {
+            "slot": "contacts.form.after-basic",
+            "component": "frontend/SocialLinksFormSection.tsx",
+            "priority": 50
+        },
+        {
+            "slot": "contacts.detail.after-basic-info",
+            "component": "frontend/SocialLinksDetailSection.tsx",
+            "priority": 50
+        }
+    ],
+    "settings": [
+        {
+            "key": "enabledNetworks",
+            "type": "multiselect",
+            "label": "Enabled Social Networks",
+            "default": ["linkedin", "twitter", "github"],
+            "options": [
+                {"value": "linkedin", "label": "LinkedIn"},
+                {"value": "twitter", "label": "Twitter/X"},
+                {"value": "github", "label": "GitHub"},
+                {"value": "facebook", "label": "Facebook"},
+                {"value": "instagram", "label": "Instagram"}
+            ]
+        }
+    ]
+}

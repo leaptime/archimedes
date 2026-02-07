@@ -12,9 +12,14 @@ use Modules\Crm\Models\Activity;
 use Modules\Crm\Models\Tag;
 use Modules\Crm\Models\LostReason;
 use Modules\Crm\Services\CrmService;
+use Modules\Core\Traits\HasModelPermissions;
 
 class CrmController extends Controller
 {
+    use HasModelPermissions;
+
+    protected ?string $modelIdentifier = 'crm.lead';
+
     public function __construct(
         private CrmService $crmService
     ) {}
@@ -61,7 +66,12 @@ class CrmController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        if ($denied = $this->authorizeAccess('read')) {
+            return $denied;
+        }
+
         $query = Lead::with(['stage', 'user', 'team', 'contact', 'tags'])
+            ->withRecordRules('read')
             ->active();
 
         // Type filter

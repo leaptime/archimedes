@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Core\Traits\HasExtensions;
 use Modules\Core\Services\PermissionService;
+use App\Traits\BelongsToOrganization;
 
 abstract class ExtendableModel extends Model
 {
     use HasExtensions;
+    use BelongsToOrganization;
 
     /**
      * The model identifier for permission checking (e.g., 'contacts.contact')

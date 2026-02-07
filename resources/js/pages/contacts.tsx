@@ -448,14 +448,15 @@ function ContactFormDialog({
                                 <div className="space-y-2">
                                     <Label>Country</Label>
                                     <Select
-                                        value={formData.country_id?.toString() || ''}
-                                        onValueChange={(v) => setFormData({ ...formData, country_id: v ? parseInt(v) : undefined })}
+                                        value={formData.country_id?.toString() || 'none'}
+                                        onValueChange={(v) => setFormData({ ...formData, country_id: v && v !== 'none' ? parseInt(v) : undefined })}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select country" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {options?.countries.map((country) => (
+                                            <SelectItem value="none">Select country</SelectItem>
+                                            {options?.countries.filter(c => c.id).map((country) => (
                                                 <SelectItem key={country.id} value={country.id.toString()}>
                                                     {country.name}
                                                 </SelectItem>
@@ -471,14 +472,15 @@ function ContactFormDialog({
                                 <div className="space-y-2">
                                     <Label>Industry</Label>
                                     <Select
-                                        value={formData.industry_id?.toString() || ''}
-                                        onValueChange={(v) => setFormData({ ...formData, industry_id: v ? parseInt(v) : undefined })}
+                                        value={formData.industry_id?.toString() || 'none'}
+                                        onValueChange={(v) => setFormData({ ...formData, industry_id: v && v !== 'none' ? parseInt(v) : undefined })}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select industry" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {options?.industries.map((ind) => (
+                                            <SelectItem value="none">Select industry</SelectItem>
+                                            {options?.industries.filter(i => i.id).map((ind) => (
                                                 <SelectItem key={ind.id} value={ind.id.toString()}>
                                                     {ind.name}
                                                 </SelectItem>
@@ -944,7 +946,7 @@ export default function Contacts() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="any">Any country</SelectItem>
-                                        {options?.countries.map((country) => (
+                                        {options?.countries.filter(c => c.id).map((country) => (
                                             <SelectItem key={country.id} value={country.id.toString()}>
                                                 {country.name}
                                             </SelectItem>
@@ -963,7 +965,7 @@ export default function Contacts() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="any">Any industry</SelectItem>
-                                        {options?.industries.map((ind) => (
+                                        {options?.industries.filter(i => i.id).map((ind) => (
                                             <SelectItem key={ind.id} value={ind.id.toString()}>
                                                 {ind.name}
                                             </SelectItem>
@@ -982,7 +984,7 @@ export default function Contacts() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="any">Any category</SelectItem>
-                                        {options?.categories.map((cat) => (
+                                        {options?.categories.filter(c => c.id).map((cat) => (
                                             <SelectItem key={cat.id} value={cat.id.toString()}>
                                                 <span className="flex items-center gap-2">
                                                     <span 

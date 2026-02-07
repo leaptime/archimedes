@@ -311,7 +311,7 @@ export default function CrmLeadDetail() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {stages.map((stage) => (
+                                            {stages.filter(s => s.id).map((stage) => (
                                                 <SelectItem key={stage.id} value={stage.id.toString()}>
                                                     {stage.name}
                                                 </SelectItem>
@@ -606,7 +606,7 @@ export default function CrmLeadDetail() {
                                     <SelectValue placeholder="Select reason..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {lostReasons.map((reason) => (
+                                    {lostReasons.filter(r => r.id).map((reason) => (
                                         <SelectItem key={reason.id} value={reason.id.toString()}>
                                             {reason.name}
                                         </SelectItem>

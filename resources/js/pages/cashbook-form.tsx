@@ -328,7 +328,7 @@ export default function CashBookForm() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="none">None</SelectItem>
-                                            {contacts.map((contact) => (
+                                            {contacts.filter(c => c.id).map((contact) => (
                                                 <SelectItem key={contact.id} value={contact.id.toString()}>
                                                     {contact.name}
                                                 </SelectItem>
@@ -350,7 +350,7 @@ export default function CashBookForm() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="none">None</SelectItem>
-                                            {bankAccounts.map((account) => (
+                                            {bankAccounts.filter(a => a.id).map((account) => (
                                                 <SelectItem key={account.id} value={account.id.toString()}>
                                                     {account.name}
                                                 </SelectItem>
